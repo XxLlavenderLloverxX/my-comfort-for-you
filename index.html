@@ -4241,6 +4241,7 @@ html body .deep-thoughts-release-btn:disabled {
 .mini-game-bunny{width:76px;height:94px;bottom:2px}
 .mini-game-bunny-art{width:72px;height:90px;display:block;animation:gameBunnyBreathe 1.7s ease-in-out infinite}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -6504,7 +6505,15 @@ html body .deep-thoughts-release-btn:disabled {
 
 
         /* ─── VIRTUAL CORKBOARD / STICKY NOTES ─── */
-        const stickyStorageKey = 'cozy_virtual_corkboard_notes_v2';
+        const stickyStorageKey = 'cozy_virtual_corkboard_notes_v1';
+        const stickerStorageKey = 'cozy_virtual_corkboard_stickers_v1';
+        const stickySupabaseUrl = 'https://zqxrdakxhkdqukojbykk.supabase.co';
+        const stickySupabaseKey = 'sb_publishable_U3yNBGXv9qMAqAXJF-QKrg_o9Wb5fW6';
+        let stickySupabase = null;
+        let stickyCloudChannel = null;
+        let stickyCloudReady = false;
+        let stickyCloudApplying = false;
+        let stickyCloudSaveTimer = null;
         const stickyBoard = document.getElementById('stickyBoard');
         const stickyTrash = document.getElementById('stickyTrash');
         let stickyNotes = [];
@@ -6513,7 +6522,9 @@ html body .deep-thoughts-release-btn:disabled {
         let stickyZ = 10;
 
         const stickySeedNotes = [
-            { id: 'seed-1', text: 'you can leave anything here..\ni might come by to\nread it =3=', label: 'from me', x: 12.2, y: 16.2, r: -4, tone: 'pink', pin: '🐰', created: new Date('2026-09-16T12:00:00').getTime() }
+            { id: 'seed-1', text: 'just a tiny reminder that\nsomewhere in the world,\ni am thinking about you.', label: 'from me', x: 34, y: 58, r: -4, tone: 'pink', pin: '🐰' },
+            { id: 'seed-2', text: 'drink some water, silly.\nyou deserve to be taken\ncare of too.', label: 'from me', x: 197, y: 33, r: 3, tone: 'cream', pin: '🥕' },
+            { id: 'seed-3', text: 'leave me anything here.\na thought, a story, or\nsomething completely random.', label: 'from me', x: 365, y: 88, r: -2, tone: 'lilac', pin: '🍰' }
         ];
 
         function loadStickyNotes() {
@@ -6540,6 +6551,7 @@ html body .deep-thoughts-release-btn:disabled {
             } catch (e) {
                 console.log('Sticky note save error:', e);
             }
+            scheduleStickyCloudSave();
         }
 
         function stickyNoteToneClass(tone) {
@@ -6762,24 +6774,28 @@ html body .deep-thoughts-release-btn:disabled {
             document.removeEventListener('mouseup', endStickyDrag);
         }
 
-        // Remember each decorative sticker's position so it stays where it was left after refresh.
-        const stickerStorageKey = 'cozy_virtual_corkboard_stickers_v1';
+        // Remember each decorative sticker's position locally and share it with the corkboard.
+        function readStickerPositions() {
+            try { return JSON.parse(localStorage.getItem(stickerStorageKey) || '{}'); }
+            catch (_) { return {}; }
+        }
+
+        function applyStickerPositions(stored) {
+            if (!stored || typeof stored !== 'object') return;
+            document.querySelectorAll('.cork-sticker[data-sticker]').forEach(sticker => {
+                const saved = stored[sticker.dataset.sticker];
+                if (!saved) return;
+                if (Number.isFinite(Number(saved.x))) sticker.style.left = `${saved.x}%`;
+                if (Number.isFinite(Number(saved.y))) sticker.style.top = `${saved.y}%`;
+                if (Number.isFinite(Number(saved.z))) {
+                    stickyZ = Math.max(stickyZ, Number(saved.z));
+                    sticker.style.zIndex = String(Number(saved.z));
+                }
+            });
+        }
+
         function loadStickerPositions() {
-            try {
-                const stored = JSON.parse(localStorage.getItem(stickerStorageKey) || '{}');
-                document.querySelectorAll('.cork-sticker[data-sticker]').forEach(sticker => {
-                    const saved = stored[sticker.dataset.sticker];
-                    if (!saved) return;
-                    if (Number.isFinite(saved.x)) sticker.style.left = `${saved.x}%`;
-                    if (Number.isFinite(saved.y)) sticker.style.top = `${saved.y}%`;
-                    if (Number.isFinite(saved.z)) {
-                        stickyZ = Math.max(stickyZ, Number(saved.z));
-                        sticker.style.zIndex = String(Number(saved.z));
-                    }
-                });
-            } catch (e) {
-                console.log('Sticker position load error:', e);
-            }
+            applyStickerPositions(readStickerPositions());
         }
 
         function saveStickerPosition(sticker) {
@@ -6787,15 +6803,107 @@ html body .deep-thoughts-release-btn:disabled {
                 const boardRect = stickyBoard.getBoundingClientRect();
                 const left = parseFloat(sticker.style.left) || 0;
                 const top = parseFloat(sticker.style.top) || 0;
-                const stored = JSON.parse(localStorage.getItem(stickerStorageKey) || '{}');
+                const stored = readStickerPositions();
                 stored[sticker.dataset.sticker] = {
                     x: (left / boardRect.width) * 100,
                     y: (top / boardRect.height) * 100,
                     z: Number(sticker.style.zIndex) || 0
                 };
                 localStorage.setItem(stickerStorageKey, JSON.stringify(stored));
+                scheduleStickyCloudSave();
             } catch (e) {
                 console.log('Sticker position save error:', e);
+            }
+        }
+
+        function scheduleStickyCloudSave() {
+            if (!stickyCloudReady || stickyCloudApplying || !stickySupabase) return;
+            clearTimeout(stickyCloudSaveTimer);
+            stickyCloudSaveTimer = setTimeout(saveStickyBoardToCloud, 180);
+        }
+
+        async function saveStickyBoardToCloud() {
+            if (!stickyCloudReady || stickyCloudApplying || !stickySupabase) return;
+            const payload = {
+                id: 1,
+                notes: stickyNotes,
+                stickers: readStickerPositions(),
+                updated_at: new Date().toISOString()
+            };
+            const { error } = await stickySupabase
+                .from('shared_corkboard')
+                .upsert(payload, { onConflict: 'id' });
+            if (error) {
+                console.error('Shared corkboard save error:', error.message);
+                return;
+            }
+            if (stickyCloudChannel) {
+                await stickyCloudChannel.send({ type: 'broadcast', event: 'board-change', payload: {
+                    notes: payload.notes, stickers: payload.stickers, updated_at: payload.updated_at
+                }});
+            }
+        }
+
+        async function initializeSharedStickyBoard() {
+            if (!window.supabase || !window.supabase.createClient) {
+                console.error('Shared corkboard could not start: Supabase library did not load.');
+                return;
+            }
+            stickySupabase = window.supabase.createClient(stickySupabaseUrl, stickySupabaseKey);
+            const { data, error } = await stickySupabase
+                .from('shared_corkboard')
+                .select('notes, stickers, updated_at')
+                .eq('id', 1)
+                .maybeSingle();
+            if (error) {
+                console.error('Shared corkboard load error:', error.message);
+                return;
+            }
+
+            stickyCloudApplying = true;
+            const localNotes = (() => {
+                try {
+                    const stored = JSON.parse(localStorage.getItem(stickyStorageKey) || 'null');
+                    return Array.isArray(stored) ? stored : stickySeedNotes.map(n => ({...n}));
+                } catch (_) { return stickySeedNotes.map(n => ({...n})); }
+            })();
+            const localStickers = readStickerPositions();
+
+            if (data && Array.isArray(data.notes) && data.notes.length) {
+                stickyNotes = data.notes;
+                localStorage.setItem(stickyStorageKey, JSON.stringify(stickyNotes));
+                renderStickyNotes();
+            } else {
+                stickyNotes = localNotes;
+                renderStickyNotes();
+            }
+
+            const cloudStickers = data && data.stickers && Object.keys(data.stickers).length
+                ? data.stickers : localStickers;
+            localStorage.setItem(stickerStorageKey, JSON.stringify(cloudStickers));
+            applyStickerPositions(cloudStickers);
+            stickyCloudReady = true;
+            stickyCloudApplying = false;
+
+            // Realtime broadcast delivers edits immediately to the other open browser.
+            stickyCloudChannel = stickySupabase.channel('shared-corkboard-live')
+                .on('broadcast', { event: 'board-change' }, ({ payload }) => {
+                    if (!payload || !Array.isArray(payload.notes)) return;
+                    stickyCloudApplying = true;
+                    stickyNotes = payload.notes;
+                    localStorage.setItem(stickyStorageKey, JSON.stringify(stickyNotes));
+                    renderStickyNotes();
+                    if (payload.stickers && typeof payload.stickers === 'object') {
+                        localStorage.setItem(stickerStorageKey, JSON.stringify(payload.stickers));
+                        applyStickerPositions(payload.stickers);
+                    }
+                    stickyCloudApplying = false;
+                })
+                .subscribe();
+
+            // If this is the first visit to the shared board, seed it from the existing local board.
+            if (!data || !Array.isArray(data.notes) || !data.notes.length) {
+                await saveStickyBoardToCloud();
             }
         }
 
@@ -6839,6 +6947,7 @@ html body .deep-thoughts-release-btn:disabled {
         });
 
         loadStickyNotes();
+        initializeSharedStickyBoard();
 
 </script>
 
