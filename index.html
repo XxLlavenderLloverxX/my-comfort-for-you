@@ -8733,18 +8733,15 @@ html body .deep-thoughts-release-btn:disabled {
   #bakuClockWidget .bcw-weatherline { font-size:11px !important; padding:6px 8px !important; max-width:calc(100% - 24px) !important; margin-right:12px !important; }
   #bakuClockWidget .bcw-weatherline:before,#bakuClockWidget .bcw-weatherline:after { top:-12px !important; height:12px !important; }
 }
-/* Search result icons are CSS-drawn shapes rather than emoji characters. */
-.desktop-search-result-icon { position:relative; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; flex:0 0 22px; font-size:0 !important; }
-.desktop-search-result-icon:before { content:''; display:block; width:15px; height:15px; border:1.6px solid #a98bc7; border-radius:5px; background:linear-gradient(145deg,#fff5fc,#e8dcfa); box-shadow:inset 0 1px 0 #fff; }
-.search-icon-heart:before { width:13px;height:13px;border:0;border-radius:0;background:#e9a1c6;clip-path:path('M 7 13 C 5 11 0 8 0 4 C 0 0 5 -1 7 3 C 9 -1 14 0 14 4 C 14 8 9 11 7 13 Z'); }
-.search-icon-calendar:before { border-radius:4px; background:linear-gradient(to bottom,#d7c4ee 0 4px,#fff4fb 4px); }
-.search-icon-envelope:before { width:16px;height:11px;border-radius:3px;background:linear-gradient(145deg,#fff4fb,#e7d9f6); }
-.search-icon-moon:before { width:15px;height:15px;border:0;border-radius:50%;background:#b8a4df;box-shadow:inset -5px -1px 0 #f8efff; }
-.search-icon-music:before { width:8px;height:13px;border:0;border-radius:2px 2px 1px 1px;background:#bda2e3;transform:skewY(-14deg);box-shadow:5px 6px 0 -2px #c987b2; }
-.search-icon-timer:before { width:13px;height:13px;border-radius:50%;background:#f3b3c5;border:2px solid #c783a2; }
-.search-icon-note:before { border-radius:2px;background:linear-gradient(135deg,#fff0ba,#f8d990); }
-.search-icon-game:before { width:16px;height:11px;border-radius:5px;background:#d7c5f1; }
-
+/* Search dropdown: display the original taskbar artwork without adding decorative pseudo-shapes. */
+.desktop-search-result-icon { position:relative; display:inline-flex; align-items:center; justify-content:center; width:25px; height:25px; min-width:25px; flex:0 0 25px; object-fit:contain; font-size:0 !important; }
+.desktop-search-result-icon::before,.desktop-search-result-icon::after { content:none !important; display:none !important; }
+.desktop-search-result-icon svg { display:block; width:25px; height:25px; overflow:visible; }
+.desktop-search-result-icon img { display:block; width:25px; height:25px; object-fit:contain; }
+.desktop-search-comfort-icon { width:22px !important; height:17px !important; min-width:25px !important; flex:0 0 25px !important; box-sizing:border-box; border:1.6px solid #bd8ebc; border-radius:4px; background:linear-gradient(145deg,#fff6fc,#eadcf7); box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(125,83,143,.12); }
+.desktop-search-comfort-icon::before,.desktop-search-comfort-icon::after { content:'' !important; display:block !important; position:absolute; top:2px; width:11px; height:1.5px; background:#bd8ebc; }
+.desktop-search-comfort-icon::before { left:1px; transform:rotate(31deg); transform-origin:left center; }
+.desktop-search-comfort-icon::after { right:0; transform:rotate(-31deg); transform-origin:right center; }
 
 /* Keep taskbar controls icon-only with matching drawn line art, never emoji glyphs. */
 .wallpaper-theme-btn { font-size:0 !important; }
@@ -8873,25 +8870,12 @@ html body .deep-thoughts-release-btn:disabled {
 }
 .desktop-container.theme-lavender .lavender-cloud::before { width:260px !important;height:155px !important;left:8% !important;top:-22px !important;filter:blur(19px) !important;opacity:.8 !important; }
 .desktop-container.theme-lavender .lavender-cloud::after { width:225px !important;height:128px !important;right:7% !important;top:40px !important;filter:blur(20px) !important;opacity:.72 !important; }
-/* Match the mini-game taskbar button's hover glow to the other pastel taskbar buttons. */
-.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame {
-  transition: transform .15s ease, background .15s ease, box-shadow .15s ease, border-color .15s ease !important;
-}
-.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame:hover {
-  transform: translateY(-1px) !important;
-  background: linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,220,251,.65)) !important;
-  border: 1px solid rgba(255,255,255,.72) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 3px 9px rgba(170,126,194,.2), 0 0 0 2px rgba(238,218,250,.25) !important;
-}
-.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame:active {
-  transform: translateY(0) !important;
-  box-shadow: inset 0 1px 3px rgba(124,83,148,.16) !important;
-}
-
 /* Hand-drawn pastel taskbar icon finish. Keep the existing mini-game artwork unchanged. */
 .desktop-taskbar .taskbar-icon-btn:not(#taskbarMiniGame) { background:linear-gradient(145deg,rgba(255,255,255,.38),rgba(229,213,249,.25)) !important;border:1px solid rgba(255,255,255,.45) !important;border-radius:11px !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 5px rgba(101,73,132,.06) !important; }
 .desktop-taskbar .taskbar-icon-btn:not(#taskbarMiniGame) .custom-taskbar-icon svg { width:25px !important;height:25px !important;filter:drop-shadow(0 1px 1px rgba(124,83,148,.12)); }
 .desktop-taskbar .taskbar-icon-btn:not(#taskbarMiniGame):hover { transform:translateY(-1px) !important;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,220,251,.65)) !important; }
+/* Match the mini-game taskbar button hover lift to every other app icon. */
+.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame:hover { transform:translateY(-1px) !important; background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,220,251,.65)) !important; }
 .desktop-taskbar .comfort-taskbar-envelope { width:22px !important;height:17px !important;border:1.6px solid #bd8ebc !important;border-radius:4px !important;background:linear-gradient(145deg,#fff6fc,#eadcf7) !important;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(125,83,143,.12); }
 .desktop-taskbar .comfort-taskbar-envelope::before,.desktop-taskbar .comfort-taskbar-envelope::after { top:2px !important;width:11px !important;height:1.5px !important;background:#bd8ebc !important; }
 /* Larger date and weather type; weather remains inside its own hanging glassy mini-frame. */
