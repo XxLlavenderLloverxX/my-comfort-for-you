@@ -633,7 +633,7 @@
 
         .rose-cluster {
             position: absolute;
-            bottom: -4px;
+            bottom: 14px;
             width: 250px;
             height: 210px;
             opacity: 0.92;
@@ -1030,9 +1030,13 @@
             position: absolute;
             right: -4px;
             bottom: 30px;
+            width: max-content;
             min-width: 118px;
-            max-width: 175px;
-            padding: 7px 11px;
+            max-width: min(260px, calc(100vw - 36px));
+            padding: 8px 12px;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: normal;
             border: 2px solid #b13f70;
             border-radius: 12px;
             background: linear-gradient(180deg, #fff8fc 0%, #f4d5ec 100%);
@@ -1041,7 +1045,6 @@
             line-height: 1.25;
             font-weight: 700;
             text-align: center;
-            white-space: nowrap;
             box-shadow: 3px 4px 0 rgba(109, 70, 101, 0.28), 0 8px 16px rgba(70, 40, 80, 0.16);
             opacity: 0;
             visibility: hidden;
@@ -5571,14 +5574,26 @@ html body .deep-thoughts-release-btn:disabled {
 
         /* ─── SWEET TASKBAR MESSAGES ─── */
         const sweetMessages = [
-            "you are lovely ♡",
-            "sending you a hug ♡",
-            "you made today sweeter ✧",
-            "you deserve soft days ♡",
-            "a little love for you 𐙚",
-            "you are doing so well ♡",
-            "here's a tiny kiss ✧",
-            "stay wonderful, okay? ♡"
+            'looking lovely today ♡',
+            'sending huggzzz (づ｡•́‿•̀｡)づ',
+            "you're doing so well just for me ☆",
+            'you make every day sweeter for me ✧',
+            "here's sum kisses mwah mwah ♡",
+            'you deserve soft days.. ♡',
+            "aren't u such a good boyy~ ♡",
+            'can i stay your sweet girl? (⁄ ⁄>⁄ω⁄<⁄ ⁄)',
+            "hm.. i think i'm in love.. ♡",
+            "hehe it's you silly that i'm in love with~ (´｡• ᵕ •｡`)",
+            'a little love for youu.. or a lot ♡',
+            'mwah i will always pray for youu ♡',
+            'mwah mwah mwaahh! *kiss kiss* ♡',
+            'stay handsome for me, bet? ☆',
+            "hehe it's cute when you read my texts~ ✧",
+            'do you love me..? ♡',
+            "you will do what i say.. won't you?~ (¬‿¬)",
+            'who do you belong to? hm? ♡',
+            'you will always stay mine. forever. ♡',
+            'fucking dumbass. ♡ (¬_¬)',
         ];
         let sweetMessageIndex = -1;
         let sweetMessageTimeout;
@@ -5595,7 +5610,7 @@ html body .deep-thoughts-release-btn:disabled {
             clearTimeout(sweetMessageTimeout);
             sweetMessageTimeout = setTimeout(() => {
                 pop.classList.remove('show');
-            }, 1800);
+            }, 2800);
         }
 
         /* ─── GLOBAL SOUND MUTE ─── */
@@ -5987,7 +6002,7 @@ html body .deep-thoughts-release-btn:disabled {
                     btn.disabled = false;
                     input.value = '';
                     input.focus();
-                }, 1800);
+                }, 2800);
                 return;
             }
 
@@ -9316,6 +9331,138 @@ html body .deep-thoughts-release-btn:disabled {
 #wallpaperThemeBtn .tray-cloud::before,#wallpaperThemeBtn .tray-cloud::after { content:none !important; display:none !important; }
 #wallpaperThemeBtn .tray-cloud svg { display:block !important; overflow:visible !important; }
 </style>
+
+
+<style id="daily-reminder-widget-styles">
+#dailyReminderWidget{position:fixed;top:218px;right:42px;width:min(310px,calc(100vw - 28px));z-index:501;color:#805b7b;font-family:inherit;pointer-events:none;opacity:0;visibility:hidden;filter:drop-shadow(0 5px 12px rgba(130,82,122,.12));animation:bcwFadeIn .75s ease 6.9s forwards}
+#dailyReminderWidget *{box-sizing:border-box}
+#dailyReminderWidget .drw-heading{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 12px 10px;color:#c77eaa;font-size:17px;letter-spacing:.02em;text-shadow:0 1px #fff}
+/* A single, clearly defined fluffy cloud label behind the heading (not scattered oval decorations). */
+#dailyReminderWidget .drw-heading:before{content:"";position:absolute;z-index:-1;pointer-events:none;left:-16px;top:-17px;width:260px;height:58px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 64'%3E%3Cpath d='M23 50 C11 50 5 42 8 34 C10 26 18 23 29 26 C27 14 38 7 50 10 C62 0 79 4 86 15 C101 7 118 12 124 24 C138 14 158 18 164 30 C178 22 197 27 201 39 C215 32 234 36 239 47 C250 42 267 45 273 51 Z' fill='%23fbf7ff' fill-opacity='0.78' stroke='%23cdb5e3' stroke-opacity='0.78' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M23 49 C65 52 103 48 145 50 S220 48 273 50' fill='none' stroke='%23ffffff' stroke-opacity='0.72' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-size:100% 100%;background-repeat:no-repeat;filter:drop-shadow(0 3px 4px rgba(190,151,211,.16));opacity:.82}
+#dailyReminderWidget .drw-heading:after{content:none}
+#dailyReminderWidget .drw-heading>span:first-child{position:relative;z-index:1;padding:2px 9px 3px 9px;color:#9c5e91;text-shadow:0 1px 0 #fff,0 0 3px #fff;white-space:nowrap;font-weight:700}
+#dailyReminderWidget .drw-day{display:none}
+#dailyReminderWidget .drw-heart{position:relative;flex:0 0 38px;width:38px;height:32px;display:grid;place-items:center;margin-left:auto;pointer-events:auto;cursor:pointer;background:#fff6fc;border:1px solid #e9b9d6;border-radius:11px 11px 11px 3px;box-shadow:inset 0 0 0 3px #f9e2f0;color:#d986b8;font-size:22px}
+#dailyReminderWidget .drw-heart:before{content:"";position:absolute;left:8px;bottom:-5px;width:8px;height:8px;background:#fff6fc;border-left:1px solid #e9b9d6;border-bottom:1px solid #e9b9d6;transform:skew(-18deg) rotate(-35deg)}
+#dailyReminderWidget .drw-stack{display:flex;flex-direction:column;gap:8px}
+#dailyReminderWidget .drw-card{position:relative;overflow:hidden;pointer-events:auto;min-height:72px;padding:9px 11px 8px;border:2px solid #d49abf;border-radius:4px 4px 11px 4px;background:linear-gradient(135deg,rgba(255,246,252,.98),rgba(255,232,245,.97));box-shadow:inset 0 0 0 3px rgba(255,255,255,.72),0 2px 0 rgba(169,105,151,.12);opacity:1;transform:translateY(0);transition:opacity .42s ease,transform .42s ease}
+#dailyReminderWidget .drw-card:after{content:"";position:absolute;right:7px;bottom:6px;width:17px;height:17px;border-right:1px solid #e6bad4;border-bottom:1px solid #e6bad4;border-radius:0 0 7px 0;opacity:.55}
+#dailyReminderWidget .drw-card.drw-out{opacity:0;transform:translateY(-7px) scale(.985)}
+#dailyReminderWidget .drw-bar{height:13px;margin:-4px -5px 7px;padding:0 4px;background:linear-gradient(90deg,#f3c3e0,#e4cafa);border-radius:3px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:9px;line-height:1}
+#dailyReminderWidget .drw-close{appearance:none;border:0;background:transparent;color:#a86c99;font:700 13px/13px inherit;cursor:pointer;padding:0 2px;min-width:17px;height:17px;display:grid;place-items:center;border-radius:4px;pointer-events:auto;position:relative;z-index:2}
+#dailyReminderWidget .drw-close:hover{background:#fff4fb;color:#8d507e}
+#dailyReminderWidget .drw-close:focus-visible{outline:1px solid #bd7cab;outline-offset:1px}
+#dailyReminderWidget .drw-body{display:flex;align-items:center;gap:9px}
+#dailyReminderWidget .drw-sticker{flex:0 0 30px;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle,#fff 0 42%,#fff5fb 43%);border:1px solid #f0d3e5;box-shadow:0 1px 0 #f4ddeb}
+#dailyReminderWidget .drw-sticker svg{width:25px;height:25px;display:block}
+#dailyReminderWidget .drw-copy{min-width:0;flex:1}
+#dailyReminderWidget .drw-message{font-size:12px;line-height:1.4;color:#856780;overflow-wrap:anywhere}
+#dailyReminderWidget .drw-meta{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:10px;color:#ce91b8}
+#dailyReminderWidget .drw-time{white-space:nowrap}#dailyReminderWidget .drw-today{color:#b18aaa}
+@keyframes drw-reveal{to{opacity:1;visibility:visible}}
+@media(max-width:700px){#dailyReminderWidget{top:180px;right:12px;width:min(278px,calc(100vw - 24px))}#dailyReminderWidget .drw-heading{font-size:15px}}
+@media(prefers-reduced-motion:reduce){#dailyReminderWidget{animation-delay:6.9s}#dailyReminderWidget .drw-card{transition:none}}
+#dailyReminderWidget.drw-collapsed .drw-stack{display:none}
+#dailyReminderWidget.drw-collapsed .drw-heading{padding-bottom:0}
+#dailyReminderWidget .drw-heart{font-family:inherit;appearance:none;}
+</style>
+<div id="dailyReminderWidget" aria-live="polite" aria-label="Daily reminders">
+ <div class="drw-heading"><span>little reminders</span><button type="button" class="drw-heart" id="drwToggle" aria-label="Hide reminders" aria-expanded="true" title="Hide reminders">♡</button></div>
+ <div class="drw-stack" id="drwStack">
+  <div class="drw-card" data-slot="0"><div class="drw-bar"><span>✿ · ˚ · ✿</span><button type="button" class="drw-close" aria-label="Dismiss this reminder" title="Dismiss reminder">×</button></div><div class="drw-body"><div class="drw-sticker" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M9 14C4 3 7 1 11 5l4 8M18 13c1-10 6-12 8-7l-2 10" fill="#fff8fd" stroke="#c88db4" stroke-width="1.5"/><ellipse cx="16" cy="19" rx="10" ry="9" fill="#fffafd" stroke="#c88db4" stroke-width="1.5"/><circle cx="12.5" cy="18" r="1" fill="#926b87"/><circle cx="19.5" cy="18" r="1" fill="#926b87"/><path d="M14 21q2 2 4 0" fill="none" stroke="#d58fb5" stroke-width="1.3" stroke-linecap="round"/><circle cx="9.5" cy="20" r="1.7" fill="#f3bfd8"/><circle cx="22.5" cy="20" r="1.7" fill="#f3bfd8"/></svg></div><div class="drw-copy"><div class="drw-message"></div><div class="drw-meta"><span class="drw-time"></span><span class="drw-today">just for you</span></div></div></div></div>
+  <div class="drw-card" data-slot="1"><div class="drw-bar"><span>♡ · ˚ · ♡</span><button type="button" class="drw-close" aria-label="Dismiss this reminder" title="Dismiss reminder">×</button></div><div class="drw-body"><div class="drw-sticker" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M9 14C4 3 7 1 11 5l4 8M18 13c1-10 6-12 8-7l-2 10" fill="#fff8fd" stroke="#c88db4" stroke-width="1.5"/><ellipse cx="16" cy="19" rx="10" ry="9" fill="#fffafd" stroke="#c88db4" stroke-width="1.5"/><circle cx="12.5" cy="18" r="1" fill="#926b87"/><circle cx="19.5" cy="18" r="1" fill="#926b87"/><path d="M14 21q2 2 4 0" fill="none" stroke="#d58fb5" stroke-width="1.3" stroke-linecap="round"/><circle cx="9.5" cy="20" r="1.7" fill="#f3bfd8"/><circle cx="22.5" cy="20" r="1.7" fill="#f3bfd8"/></svg></div><div class="drw-copy"><div class="drw-message"></div><div class="drw-meta"><span class="drw-time"></span><span class="drw-today">just for you</span></div></div></div></div>
+  <div class="drw-card" data-slot="2"><div class="drw-bar"><span>✧ · ˚ · ✧</span><button type="button" class="drw-close" aria-label="Dismiss this reminder" title="Dismiss reminder">×</button></div><div class="drw-body"><div class="drw-sticker" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M9 14C4 3 7 1 11 5l4 8M18 13c1-10 6-12 8-7l-2 10" fill="#fff8fd" stroke="#c88db4" stroke-width="1.5"/><ellipse cx="16" cy="19" rx="10" ry="9" fill="#fffafd" stroke="#c88db4" stroke-width="1.5"/><circle cx="12.5" cy="18" r="1" fill="#926b87"/><circle cx="19.5" cy="18" r="1" fill="#926b87"/><path d="M14 21q2 2 4 0" fill="none" stroke="#d58fb5" stroke-width="1.3" stroke-linecap="round"/><circle cx="9.5" cy="20" r="1.7" fill="#f3bfd8"/><circle cx="22.5" cy="20" r="1.7" fill="#f3bfd8"/></svg></div><div class="drw-copy"><div class="drw-message"></div><div class="drw-meta"><span class="drw-time"></span><span class="drw-today">just for you</span></div></div></div></div>
+ </div>
+</div>
+<script id="daily-reminder-widget-script">
+(function(){
+ const widget=document.getElementById('dailyReminderWidget');
+ if(!widget||widget.dataset.ready==='1')return;
+ widget.dataset.ready='1';
+ const cards=Array.from(widget.querySelectorAll('.drw-card'));
+ const reminders=[
+  'go drink some water! when was the last time you drank?? (｡•́︿•̀｡)',
+  'make sure to have room for dessert! or well.. for me..? (⁄ ⁄•⁄ω⁄•⁄ ⁄)',
+  'stop clenching your jaw and let your shoulders drop.. plz :c',
+  "go eat something nourishing if you haven't eaten yet! (｡･ω･｡)",
+  "are you srsly still staring at your laptop? didn't i tell you to rest your eyes from bright screens! (눈_눈)",
+  'psst.. i love you very much..~ i really do.. ♡ (⁄ ⁄>⁄ω⁄<⁄ ⁄)',
+  'shoo! take a break from the blinding screen and go rest your eyes for awhile! ☆',
+  'heyy.. does your phone or earpods need charging? ♡',
+  'heyy did you rem to send someone you love a teeny tiny message? i might be waiting.. (⁄ ⁄>⁄ ▽ ⁄<⁄ ⁄)',
+  "c'mon now! stand up and stretch your back. loosen your aching hands a little. ☆",
+  'ifff u feel tired, just pause for awhile! instead of just pushing through blindly. ♡',
+  'oi i see that pile of clothes over there. go tidy it up! (¬_¬)',
+  'did you rem to put your thoughts on the sticky notes board? ☆',
+  "don't forget to save your work. ☆",
+  'take a moment to notice smth lovely around you rn.. or ahem someone.. (¬‿¬)',
+  'you realize you do NOT have to finish everything today all at once.. (￣▽￣*)ゞ',
+  'check your to-do list and choose only the next step. not the next million steps. ☆',
+  "y'know you're allowed to ask for help whenever you need it.. ♡",
+  "don't forget you have already made it through harder days. you will get through this one too. (ง •̀_•́)ง",
+  'take a deep breath before responding to something stressing you out.. ( ˘͈ ᵕ ˘͈♡)',
+  "hey why don't you take a short walk around? stretch your damn legs. ☆",
+  'give yourself a tiny break please.. at least before you start on the next thing. (´｡• ᵕ •｡`)',
+  "if it gets too late, it's time to rest. not work harder! ☆",
+  'one difficult moment in your day does NOT mean a whole ass difficult day. (｡•́︿•̀｡)',
+  'make sure to have a comfy space by adjusting ur light and posture. ☆',
+  "if this task is too much for you, start w just two minutes. any progress counts! (ง'̀-'́)ง",
+  "did you close those old ass tabs u dun need? c'mon let ur computer breathe too! (￣▽￣)",
+  'you deserve to give yourself some love too. ♡',
+  'now with me! a slow breath in..! then let it go softly.. hehe good boy ♡',
+  "don't forget to check the time.. u might be missing out on something! ☆",
+  'give yourself some credit! you have already done so much. ♡',
+  "y'know you don't need to exhaust yourself to earn your rest.. ♡",
+  'rem to eat a proper meal! just rice is not a fucking meal. (¬､¬)',
+  'make sure your next step is small enough to feel manageable. not beyond your capability! ☆',
+ ];
+ let index=Math.floor(Math.random()*reminders.length);
+ const used=new Set();
+ function pick(){let n;do{n=Math.floor(Math.random()*reminders.length)}while(used.has(n)&&used.size<reminders.length);used.add(n);if(used.size>=reminders.length)used.clear();return reminders[n]}
+ function fill(card,text){card.querySelector('.drw-message').textContent=text;card.querySelector('.drw-time').textContent='♡ a gentle nudge'}
+ fill(cards[0],reminders[index]);used.add(index);
+ fill(cards[1],pick());fill(cards[2],pick());
+ cards.forEach(function(card){
+  const close=card.querySelector('.drw-close');
+  if(!close)return;
+  close.addEventListener('click',function(event){
+   event.preventDefault();event.stopPropagation();
+   if(card.dataset.dismissing==='1')return;
+   card.dataset.dismissing='1';
+   const slot=cards.indexOf(card);
+   card.classList.add('drw-out');
+   window.setTimeout(function(){
+    for(let i=slot;i<cards.length-1;i++){
+     fill(cards[i],cards[i+1].querySelector('.drw-message').textContent);
+    }
+    fill(cards[cards.length-1],pick());
+    card.classList.remove('drw-out');
+    delete card.dataset.dismissing;
+   },250);
+  });
+ });
+ const toggle=widget.querySelector('#drwToggle');
+ toggle.addEventListener('click',function(){
+  const collapsed=widget.classList.toggle('drw-collapsed');
+  toggle.setAttribute('aria-expanded',String(!collapsed));
+  toggle.setAttribute('aria-label',collapsed?'Show reminders':'Hide reminders');
+  toggle.title=collapsed?'Show reminders':'Hide reminders';
+ });
+ function advance(){
+  const first=cards[0];first.classList.add('drw-out');
+  window.setTimeout(function(){
+   const outgoing=cards.shift();
+   const nextText=pick();
+   outgoing.classList.remove('drw-out');
+   fill(outgoing,nextText);
+   outgoing.style.transition='none';outgoing.style.opacity='0';outgoing.style.transform='translateY(7px)';
+   widget.querySelector('.drw-stack').appendChild(outgoing);cards.push(outgoing);
+   void outgoing.offsetWidth;outgoing.style.transition='';outgoing.style.opacity='1';outgoing.style.transform='translateY(0)';
+  },430);
+ }
+ window.setInterval(advance,10000);
+})();
+</script>
 
 </body>
 </html>
