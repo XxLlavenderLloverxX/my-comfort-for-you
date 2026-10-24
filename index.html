@@ -4309,8 +4309,8 @@ html body .deep-thoughts-release-btn:disabled {
 .mood-face.mood-excited .face-base { fill:#ffe7f0; stroke:#d98da9; }
 .mood-face.mood-loving .face-base { fill:#ffe1ed; stroke:#df8cae; }
 /* Relaxed and normal use soft non-purple colors. */
-.mood-face.mood-relaxed .face-base { fill:#e3f4e7; stroke:#9bc9a7; }
-.mood-face.mood-relaxed .cheek { fill:#a8dcb4; }
+.mood-face.mood-relaxed .face-base { fill:#ffe7ef; stroke:#d98da9; }
+.mood-face.mood-relaxed .cheek { fill:#f3a6bb; }
 .mood-face.mood-normal .face-base { fill:#fff0d9; stroke:#d9b98c; }
 .mood-face.mood-normal .cheek { fill:#f0c69b; }
 .mood-face.mood-stressed .face-base,.mood-face.mood-upset .face-base { fill:#ffe5e5; stroke:#dc9a9a; }
@@ -6691,6 +6691,7 @@ html body .deep-thoughts-release-btn:disabled {
         const rawPlaylist = [
             { title: "Oh My Little Baby Boy 𖹭", artist: "Babe", url: "https://www.dropbox.com/scl/fi/9bodmntwbhxwj8uwvqhvr/Babe-Oh-My-Little-Baby-Boy-SPEED-UP.mp3?rlkey=irm5ljhbghsl3s71gie9d712v&st=pfnev91z&dl=1", cover: "https://i.postimg.cc/Qt4hz1b3/image.jpg", volume: 0.9 },
             { title: "I Really Like You ᰔ", artist: "Carly Rae Jepsen", url: "https://www.dropbox.com/scl/fi/6cj9plawhj48kxxwdo84b/Nightcore-I-Really-Like-You.mp3?rlkey=ibea8c00cbpl3pcvisphgegws&st=m9gyssa8&dl=1", cover: "https://i.postimg.cc/1ttGvSHK/download-(1).jpg", volume: 0.9 },
+            { title: "Love You Like a Love Song ♡", artist: "Selena Gomez & The Scene", url: "https://www.dropbox.com/scl/fi/1xmyptf6gcmlfdclne7xm/Nightcore-Love-You-Like-a-Love-Song-Lyrics.mp3?rlkey=5hc89minc6h7jisw7ekpl2d1r&st=ldxrvk85&dl=1", cover: "https://i.postimg.cc/JzVVd8H6/download-(5).jpg", volume: 0.9 },
             { title: "Kiss Me Thru the Phone ꨄ︎", artist: "Soulja Boy ft. Sammie", url: "https://www.dropbox.com/scl/fi/hm6debmcrbyz5a63fta1t/Nightcore-Kiss-me-thru-the-phone.mp3?rlkey=iy65hlf4ii6xcod7032qxf2v1&st=ywo5bttd&dl=1", cover: "https://i.postimg.cc/FzKPzJ3p/download-(2).jpg", volume: 0.9 },
             { title: "glitter ✧", artist: "lexycat", url: "https://www.dropbox.com/scl/fi/1obqi8wtjm4oa246sesw9/glitter-lexycat-speed-up.mp3?rlkey=k2mcm8jof35vp1dxz49ioruwz&st=pqwrfdlr&dl=1", cover: "https://i.postimg.cc/mrV33kQP/download-(4).jpg", volume: 1 },
             { title: "over tonight 𐭩", artist: "RomancePlanet", url: "https://www.dropbox.com/scl/fi/fb333wdzt3vzol4omb4y3/ROMANCEPLANET-OVER-TONIGHT-OFFICIAL-AUDIO.mp3?rlkey=58j3qmom9fdjv1nxvzkbcbd1r&st=hkep6uoi&dl=1", cover: "https://i.postimg.cc/rsHh7F3d/download-(17).jpg", volume: 0.9 },
@@ -8579,29 +8580,98 @@ html body .deep-thoughts-release-btn:disabled {
     };
 })();
 </script>\n
-<!-- Website-open notification via Web3Forms -->
-<script>
+<!-- Website activity notification via Web3Forms: one email per page load, after meaningful interaction -->
+<script id="web3forms-activity-notification">
 (function () {
     const WEB3FORMS_ACCESS_KEY = '1ff373eb-8ed2-4c77-91ac-fca28f793818';
+    let notificationStarted = false;
+    let notificationSent = false;
 
-    const formData = new FormData();
-    formData.append('access_key', WEB3FORMS_ACCESS_KEY);
-    formData.append('subject', 'Cozy Life website opened');
-    formData.append('from_name', 'Cozy Life Website');
-    formData.append('message',
-        'Your website was opened.\n\n' +
-        'Time: ' + new Date().toLocaleString() + '\n' +
-        'Page: ' + window.location.href + '\n' +
-        'Referrer: ' + (document.referrer || 'Direct visit') + '\n' +
-        'User agent: ' + navigator.userAgent
-    );
+    function describeActivity(target) {
+        if (!target || !target.closest) return null;
+        const el = target.closest('button, a, [role="button"], input, textarea, select, [contenteditable="true"], [onclick]');
+        if (!el) return null;
 
-    fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        body: formData
-    }).catch(function (error) {
-        console.warn('Website-open notification could not be sent:', error);
-    });
+        const id = (el.id || '').toLowerCase();
+        const label = (el.getAttribute('aria-label') || el.getAttribute('title') || el.innerText || el.value || '').trim().replace(/\s+/g, ' ');
+        const known = [
+            ['taskbarDailyCheckin', 'Daily check-in'],
+            ['taskbarNeedComfort', 'Need comfort'],
+            ['taskbarDeepThoughts', 'Deep thoughts'],
+            ['taskbarMusicPlayer', 'Music player'],
+            ['taskbarPomodoro', 'Pomodoro'],
+            ['taskbarStickyNotes', 'Sticky notes'],
+            ['taskbarMiniGame', 'Mini game'],
+            ['taskbarStats', 'Stats'],
+            ['desktopAppSearch', 'App search']
+        ];
+        for (const item of known) {
+            if (id === item[0].toLowerCase()) return item[1];
+        }
+
+        const context = el.closest('[id]');
+        if (context && context.id) {
+            const contextId = context.id.toLowerCase();
+            if (contextId.includes('music')) return 'Music player';
+            if (contextId.includes('pomodoro')) return 'Pomodoro';
+            if (contextId.includes('sticky') || contextId.includes('corkboard')) return 'Sticky notes';
+            if (contextId.includes('checkin') || contextId.includes('check-in')) return 'Daily check-in';
+            if (contextId.includes('thought')) return 'Deep thoughts';
+            if (contextId.includes('minigame') || contextId.includes('mini-game')) return 'Mini game';
+            if (contextId.includes('stats') || contextId.includes('girlfriend')) return 'Stats';
+            if (contextId.includes('comfort')) return 'Need comfort';
+        }
+        if (label) return label.slice(0, 100);
+        return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? 'Text entry' : 'Website feature';
+    }
+
+    async function sendActivityNotification(activity) {
+        if (notificationStarted || notificationSent) return;
+        notificationStarted = true;
+        const time = new Date().toLocaleString();
+        const formData = new FormData();
+        formData.append('access_key', WEB3FORMS_ACCESS_KEY);
+        formData.append('subject', 'Cozy Life website activity');
+        formData.append('from_name', 'Cozy Life Website');
+        formData.append('message',
+            'The website was used.\n\n' +
+            'Activity: ' + activity + '\n' +
+            'Time: ' + time + '\n' +
+            'Page: ' + window.location.href
+        );
+
+        try {
+            const response = await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json().catch(function () { return null; });
+            if (!response.ok || !result || result.success !== true) {
+                throw new Error('Web3Forms notification failed (HTTP ' + response.status + '): ' + JSON.stringify(result));
+            }
+            // Keep the once-only flag in memory only: a page refresh resets it,
+            // allowing one new email after the next meaningful interaction.
+            notificationSent = true;
+        } catch (error) {
+            notificationStarted = false;
+            console.error('Website activity notification failed. It will retry on the next interaction.', error);
+        }
+    }
+
+    // Any meaningful control click counts; loading or refreshing alone does not.
+    document.addEventListener('click', function (event) {
+        const activity = describeActivity(event.target);
+        if (activity) sendActivityNotification(activity);
+    }, true);
+
+    // Typing/editing also counts, including sticky-note text edits.
+    document.addEventListener('input', function (event) {
+        const target = event.target;
+        if (!target || !target.matches) return;
+        if (target.matches('input, textarea, select, [contenteditable="true"]')) {
+            sendActivityNotification(describeActivity(target) || 'Text entry');
+        }
+    }, true);
 })();
 </script>
 
