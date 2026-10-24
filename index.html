@@ -924,6 +924,7 @@
         }
 
         .desktop-container.theme-night .night-theme-layer .moon {
+            top: calc(10% + 14px);
             opacity: 1;
             pointer-events: none;
         }
@@ -1248,7 +1249,8 @@
         .deep-thoughts-window.window-active,
         .stats-window.window-active,
         .sticky-notes-window.window-active,
-        .mini-game-window.window-active {
+        .mini-game-window.window-active,
+        .daily-checkin-window.window-active {
             z-index: 300;
         }
 
@@ -2436,7 +2438,7 @@
             min-height: 0;
             margin: 11px;
             border-radius: 15px;
-            overflow: visible;
+            overflow: hidden;
             background-color: #ac764a;
             background-image:
                 radial-gradient(circle at 12% 18%, rgba(74, 43, 25, 0.28) 0 1px, transparent 1.5px),
@@ -2943,7 +2945,7 @@
             top: 45%;
             left: 45%;
             transform: translate(-50%, -50%);
-            width: 375px;
+            width: min(400px, calc(100vw - 24px));
             background: #fff8fa;
             border: 4px solid #ff8fab;
             border-radius: 46px 34px 40px 30px / 32px 42px 36px 44px;
@@ -3049,7 +3051,7 @@
 
         .music-screen {
             width: 100%;
-            height: 190px;
+            height: 200px;
             background: linear-gradient(135deg, #ffd1dc, #ffb7c5);
             border: 3px solid #ff8fab;
             border-radius: 18px;
@@ -3065,8 +3067,8 @@
         .vinyl-record {
             position: absolute;
             right: 20px;
-            width: 140px;
-            height: 140px;
+            width: 150px;
+            height: 150px;
             background: radial-gradient(circle, #e0e0e0 0%, #f5f5f5 30%, #cccccc 31%, #ffffff 50%, #dcdcdc 70%, #ffffff 100%);
             border-radius: 50%;
             border: 3px solid rgba(255,255,255,0.8);
@@ -3120,8 +3122,8 @@
         .polaroid-card {
             position: absolute;
             left: 20px;
-            width: 110px;
-            height: 135px;
+            width: 122px;
+            height: 145px;
             background: #ffffff;
             padding: 8px 8px 18px 8px;
             border-radius: 8px;
@@ -3138,7 +3140,7 @@
         }
         .polaroid-img {
             width: 100%;
-            height: 90px;
+            height: 100px;
             background: linear-gradient(135deg, #b892d1, #f7b2c5);
             border-radius: 4px;
             display: flex;
@@ -4242,8 +4244,395 @@ html body .deep-thoughts-release-btn:disabled {
 .mini-game-bunny-art{width:72px;height:90px;display:block;animation:gameBunnyBreathe 1.7s ease-in-out infinite}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style id="daily-checkin-saved-bubble-styles">
+/* Bunny speech bubble deliberately mirrors the taskbar mail-message bubble. */
+.daily-checkin-saved-bubble {
+  position:absolute; right:49px; bottom:137px; z-index:16;
+  display:flex; align-items:center; justify-content:center;
+  min-width:118px; max-width:190px; box-sizing:border-box;
+  padding:7px 11px; border:2px solid #b13f70; border-radius:12px;
+  background:linear-gradient(180deg,#fff8fc 0%,#f4d5ec 100%);
+  color:#b13f70; font:700 10px/1.25 'Quicksand',sans-serif;
+  text-align:center; white-space:normal;
+  box-shadow:3px 4px 0 rgba(109,70,101,.28),0 8px 16px rgba(70,40,80,.16);
+  pointer-events:none; opacity:0; visibility:hidden;
+  transform:translateY(7px) scale(.94); transform-origin:bottom right;
+  transition:opacity .22s ease,transform .22s cubic-bezier(.175,.885,.32,1.275),visibility .22s ease;
+}
+.daily-checkin-saved-bubble::after {
+  content:''; position:absolute; right:8px; bottom:-8px; width:13px; height:13px;
+  background:#f4d5ec; border-right:2px solid #b13f70; border-bottom:2px solid #b13f70;
+  transform:rotate(45deg);
+}
+.daily-checkin-saved-bubble.show { opacity:1; visibility:visible; transform:translateY(0) scale(1); }
+@media(max-width:520px) { .daily-checkin-saved-bubble { right:35px; bottom:124px; font-size:10px; padding:6px 10px; } }
+</style>
+
+<style id="daily-checkin-note-styles">
+.daily-checkin-note-section { display:flex; flex-direction:column; gap:6px; }
+.daily-checkin-note-section label { align-self:flex-start; color:#85445e; font:600 10px/1.3 'Quicksand',sans-serif; }
+.daily-checkin-note-section textarea { width:100%; min-height:62px; max-height:100px; resize:vertical; box-sizing:border-box; border:1.5px solid #efc8d8; border-radius:12px; background:rgba(255,249,252,.92); color:#75445a; padding:8px 10px; font:500 11px/1.45 'Quicksand',sans-serif; outline:none; }
+.daily-checkin-note-section textarea::placeholder { color:#c28da5; }
+.daily-checkin-note-section textarea:focus { border-color:#d98bab; box-shadow:0 0 0 2px rgba(217,139,171,.12); }
+</style>
+
+<style id="daily-checkin-styles">
+.daily-checkin-desktop-icon { grid-column: 3; grid-row: 1; }
+.desktop-icons-area > .desktop-icon.girlfriend-exe-desktop-icon { grid-column: 2; grid-row: 3; }
+.daily-checkin-window { position:absolute; top:48%; left:52%; transform:translate(-50%,-50%); width:470px; max-width:calc(100vw - 28px); height:min(690px,calc(100vh - 105px)); background:rgba(255,245,249,.98); backdrop-filter:blur(16px); border:4px solid #f3a9ba; border-radius:42px 32px 48px 38px / 38px 48px 32px 42px; box-shadow:0 15px 35px rgba(247,178,195,.4),0 25px 50px rgba(220,200,230,.4),inset 0 0 20px rgba(255,255,255,.9); z-index:100; display:none; flex-direction:column; overflow:visible; font-family:'Quicksand',sans-serif; transform-origin:center center; transition:transform .35s cubic-bezier(.25,1,.5,1),opacity .2s ease; }
+.daily-checkin-window.window-active { z-index:300; }
+.daily-checkin-window.minimized { opacity:0; pointer-events:none; }
+.daily-checkin-title-copy { display:flex; align-items:center; min-width:0; }
+.daily-checkin-title-copy span { font-size:13px; }
+.daily-checkin-body { display:flex; flex-direction:column; flex:1 1 auto; width:calc(100% - 4px); max-width:100%; box-sizing:border-box; align-self:flex-start; gap:12px; padding:14px 14px 16px 16px; min-height:0; min-width:0; overflow-x:hidden; overflow-y:auto; border-bottom-left-radius:34px; border-bottom-right-radius:38px; background:linear-gradient(180deg,rgba(255,248,251,.97),rgba(250,244,255,.97)); scrollbar-width:thin; scrollbar-color:#efabc0 #fff0f5; }
+.daily-checkin-section { background:rgba(255,255,255,.8); border:1.5px solid #f3d2df; border-radius:20px 15px 20px 15px; padding:12px; box-shadow:0 3px 9px rgba(222,166,190,.08); }
+.daily-checkin-section h3 { margin:0; font-size:12px; color:#85445e; letter-spacing:.1px; }
+.daily-checkin-hint { margin:3px 0 9px; font-size:9px; color:#b27b95; }
+.daily-mood-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
+.daily-mood-option { min-width:0; padding:7px 2px 6px; border:1px solid #f4dce5; border-radius:13px 10px 13px 10px; background:#fff9fb; color:#8d5870; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; transition:transform .15s ease,background .15s ease,border-color .15s ease,box-shadow .15s ease; }
+.daily-mood-option:hover { transform:translateY(-2px); border-color:#e9a5be; }
+.daily-mood-option.selected { background:linear-gradient(135deg,#ffe2ed,#f0e4ff); border-color:#dc8eae; box-shadow:0 0 0 1px rgba(220,142,174,.14),0 3px 7px rgba(220,142,174,.13); }
+.daily-mood-option:focus-visible,.daily-heart:focus-visible { outline:2px solid #c96f98; outline-offset:2px; }
+.daily-mood-option small { font-family:'Quicksand',sans-serif; font-size:9px; line-height:1.15; }
+.mood-face { width:31px; height:31px; display:block; overflow:visible; }
+.mood-face .face-base { fill:#ffe7ef; stroke:#d98da9; stroke-width:2; }
+.mood-face .cheek { fill:#f3a6bb; opacity:.82; }
+.mood-face .eye,.mood-face .brow,.mood-face .mouth,.mood-face .detail { fill:none; stroke:#74445a; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+.mood-face .eye-fill { fill:#74445a; }
+.mood-face .mouth-fill { fill:#d77c9c; stroke:#74445a; stroke-width:1.7; }
+.mood-face .detail { stroke:#d77c9c; stroke-width:2; }
+.mood-face.mood-loving .eye-fill { fill:#d96e9b; }
+.mood-face.mood-sad .mouth,.mood-face.mood-lonely .mouth,.mood-face.mood-worried .mouth,.mood-face.mood-scared .mouth,.mood-face.mood-tired .mouth,.mood-face.mood-exhausted .mouth,.mood-face.mood-sick .mouth { stroke:#a85c7b; }
+.mood-face.mood-sick .face-base { fill:#e8f2d9; stroke:#a9bd91; }
+.mood-face.mood-sick .cheek { fill:#b9cda5; }
+.mood-face.mood-excited .face-base { fill:#ffe7f0; stroke:#d98da9; }
+.mood-face.mood-loving .face-base { fill:#ffe1ed; stroke:#df8cae; }
+/* Relaxed and normal use soft non-purple colors. */
+.mood-face.mood-relaxed .face-base { fill:#e3f4e7; stroke:#9bc9a7; }
+.mood-face.mood-relaxed .cheek { fill:#a8dcb4; }
+.mood-face.mood-normal .face-base { fill:#fff0d9; stroke:#d9b98c; }
+.mood-face.mood-normal .cheek { fill:#f0c69b; }
+.mood-face.mood-stressed .face-base,.mood-face.mood-upset .face-base { fill:#ffe5e5; stroke:#dc9a9a; }
+.daily-rating-section { padding:11px 13px 10px; }
+.daily-rating-heading { display:flex; align-items:center; gap:8px; }
+.daily-rating-heading h3 { flex:1; }
+.daily-heart-row { display:flex; align-items:center; justify-content:space-evenly; gap:16px; margin:12px 4px 9px; }
+.daily-heart { width:43px; height:41px; flex:0 1 43px; display:flex; align-items:center; justify-content:center; padding:2px; border:0; border-radius:8px; background:transparent; color:#e6a3ba; cursor:pointer; transition:transform .15s ease,color .15s ease,filter .15s ease; }
+.daily-heart:hover { transform:translateY(-2px) scale(1.07); }
+.daily-heart svg { width:37px; height:35px; display:block; overflow:visible; }
+.daily-heart svg path { fill:transparent; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; transition:fill .15s ease,stroke .15s ease; }
+.daily-heart.selected { color:#e477a2; }
+.daily-heart.selected svg path { fill:#f39fbd; stroke:#d96f98; }
+.daily-rating-ends { display:flex; justify-content:space-between; gap:8px; font-size:9px; color:#ad7b92; }
+.daily-rating-ends span:last-child { text-align:right; }
+.daily-checkin-footer { display:flex; justify-content:center; padding:3px 0 1px; }
+.daily-checkin-save { border:1.5px solid #e69db8; border-radius:999px; background:linear-gradient(135deg,#ffcfdf,#f4d8ff); color:#7e3e5c; padding:10px 24px; font:700 12px 'Quicksand',sans-serif; box-shadow:0 4px 10px rgba(226,155,186,.2); cursor:pointer; transition:transform .15s ease,filter .15s ease,box-shadow .15s ease; }
+.daily-checkin-save:hover { transform:translateY(-1px); filter:saturate(1.08); }
+.daily-checkin-save.saved { box-shadow:0 0 0 3px rgba(226,155,186,.22),0 4px 10px rgba(226,155,186,.2); }
+.daily-checkin-save.save-error { border-color:#c96f98; filter:saturate(.75); }
+.daily-checkin-icon-mark { font-family:'Quicksand',sans-serif; color:#cf7f9f; font-size:22px; line-height:1; }
+@media(max-width:520px) { .daily-checkin-window { width:calc(100vw - 20px); height:calc(100vh - 90px); } .daily-checkin-body { width:calc(100% - 4px); padding:11px 10px 11px 11px; gap:9px; } .daily-mood-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } .mood-face { width:29px; height:29px; } .daily-heart-row { gap:8px; margin-left:0; margin-right:0; } .daily-heart { width:37px; height:36px; flex-basis:37px; } .daily-heart svg { width:32px; height:31px; } }
+
+/* Daily check-in refinements requested: clean face-only mood choices, compact ratings, contained scrollbar. */
+.daily-checkin-window { box-sizing:border-box; }
+.daily-checkin-body {
+  /* Keep the scroll track inside the window's pink frame, right at its inner edge. */
+  width:100%; max-width:100%; margin:0; align-self:stretch;
+  padding:14px 16px 16px; box-sizing:border-box; min-width:0;
+  scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:#efabc0 #fff0f5;
+  overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain;
+}
+.daily-checkin-body::-webkit-scrollbar { width:5px; }
+.daily-checkin-body::-webkit-scrollbar-track { background:#fff0f5; border-radius:999px; margin:8px 2px 10px 0; }
+.daily-checkin-body::-webkit-scrollbar-thumb { background:#efabc0; border:1px solid #fff0f5; border-radius:999px; }
+.daily-checkin-body::-webkit-scrollbar-thumb:hover { background:#df8eae; }
+.daily-mood-grid { gap:9px 6px; }
+.daily-mood-option {
+  border:1px solid transparent; background:transparent; border-radius:12px;
+  padding:4px 1px 3px; gap:3px; box-shadow:none;
+}
+.daily-mood-option:hover { background:rgba(255,231,241,.42); border-color:transparent; transform:translateY(-1px); }
+.daily-mood-option.selected { background:rgba(255,221,235,.55); border-color:transparent; box-shadow:none; }
+.daily-mood-option.selected .mood-face { filter:drop-shadow(0 2px 3px rgba(212,119,158,.22)); transform:scale(1.06); }
+.daily-mood-option small { display:block; font-size:10px; line-height:1.15; font-weight:600; }
+.mood-face { width:39px; height:39px; transition:transform .15s ease,filter .15s ease; }
+.daily-rating-section { padding:8px 12px 8px; }
+.daily-heart-row { gap:19px; margin:7px 4px 6px; }
+.daily-heart { height:34px; width:39px; flex-basis:39px; padding:0; }
+.daily-heart svg { width:33px; height:31px; }
+.daily-rating-ends { font-size:9px; }
+/* Keep these two minimized taskbar buttons consistent with the others. */
+.taskbar-icon-btn#taskbarMiniGame,
+.taskbar-icon-btn#taskbarDailyCheckin {
+  box-sizing:border-box; height:32px; min-height:32px; max-height:32px;
+  padding:4px 10px; font-size:12px; line-height:18px; gap:6px; white-space:nowrap;
+}
+.taskbar-icon-btn#taskbarMiniGame:active,
+.taskbar-icon-btn#taskbarDailyCheckin:active { padding:4px 10px; }
+.taskbar-icon-btn#taskbarDailyCheckin .taskbar-icon-symbol { font-size:16px; line-height:18px; }
+@media(max-width:520px) {
+  .daily-checkin-body { width:100%; max-width:100%; margin:0; padding:11px 13px 11px 13px; }
+  .daily-mood-grid { gap:8px 5px; }
+  .mood-face { width:35px; height:35px; }
+  .daily-heart-row { gap:9px; margin-top:5px; margin-bottom:5px; }
+  .daily-heart { width:34px; height:30px; flex-basis:34px; }
+  .daily-heart svg { width:29px; height:27px; }
+}
+
+
+/* Final scrollbar containment: keep the scrollport a few pixels inside the right and lower frame edges. */
+.daily-checkin-body {
+  flex:1 1 0%;
+  width:auto !important;
+  max-width:none !important;
+  min-width:0;
+  min-height:0;
+  align-self:stretch;
+  margin:0 4px 4px 0 !important;
+  padding-right:12px;
+  border-bottom-right-radius:30px;
+  border-bottom-left-radius:30px;
+  box-sizing:border-box;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  scrollbar-gutter:auto;
+}
+.daily-checkin-body::-webkit-scrollbar { width:4px; }
+.daily-checkin-body::-webkit-scrollbar-track { margin:8px 1px 12px 0; border-radius:999px; }
+.daily-checkin-body::-webkit-scrollbar-thumb { border:1px solid #fff0f5; border-radius:999px; }
+@media(max-width:520px) {
+  .daily-checkin-body { margin-right:3px !important; margin-bottom:3px !important; padding:11px 12px 11px 13px; }
+}
+
+</style>
+
+
+<style id="daily-checkin-taskbar-default">#taskbarDailyCheckin { display:none; }</style>
+
+
+<style id="baku-clock-weather-widget-styles">
+#bakuClockWidget{position:fixed;top:36px;right:42px;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:5px;width:310px;color:#a64f78;font-family:inherit;pointer-events:none;text-shadow:0 1px 0 rgba(255,255,255,.62);opacity:0;visibility:hidden;animation:bcwFadeIn .75s ease 6.9s forwards}
+@keyframes bcwFadeIn{to{opacity:1;visibility:visible}}
+#bakuClockWidget .bcw-main{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px;width:100%;padding:9px 12px 5px;box-sizing:border-box}
+#bakuClockWidget .bcw-time{font-size:clamp(39px,4.1vw,54px);font-weight:800;letter-spacing:1px;line-height:1;color:#a94f7b;font-variant-numeric:tabular-nums;white-space:nowrap}
+#bakuClockWidget .bcw-ampm{font-size:12px;font-weight:700;letter-spacing:1px;margin-left:4px;color:#c06e98;vertical-align:top}
+#bakuClockWidget .bcw-date{font-size:12px;line-height:1.6;text-align:right;white-space:nowrap;color:#98506f}
+#bakuClockWidget .bcw-weekday{font-size:13px;color:#b75d87}
+#bakuClockWidget .bcw-weather{font-size:12px;text-align:right;line-height:1.35;color:#98506f;white-space:nowrap}
+#bakuClockWidget .bcw-weather strong{font-size:16px;color:#a94f7b}
+#bakuClockWidget .bcw-decor{position:absolute;line-height:1;color:#e18db2;opacity:.96;user-select:none;white-space:nowrap}
+#bakuClockWidget .bcw-bow{top:-9px;left:6px;font-size:32px;transform:rotate(-12deg);filter:drop-shadow(0 2px 2px #fff8)}
+#bakuClockWidget .bcw-heart{right:22px;top:-12px;font-size:24px;animation:bcwFloat 3.6s ease-in-out infinite}
+#bakuClockWidget .bcw-sparkle{left:-13px;bottom:-8px;font-size:23px;animation:bcwTwinkle 2.4s ease-in-out infinite}
+#bakuClockWidget .bcw-heart2{left:42%;bottom:-20px;font-size:25px;transform:rotate(-12deg);animation:bcwFloat 4s ease-in-out infinite .5s}
+#bakuClockWidget .bcw-star2{right:-14px;top:26px;font-size:20px;animation:bcwTwinkle 2.8s ease-in-out infinite .4s}
+#bakuClockWidget .bcw-paw{left:-2px;top:46px;font-size:25px;transform:rotate(-15deg)}
+#bakuClockWidget .bcw-cat{right:45px;top:-24px;font-size:26px;letter-spacing:-7px;color:#c67ba0;transform:rotate(4deg)}
+#bakuClockWidget .bcw-weatherline{align-self:flex-end;margin-right:2px;padding:2px 8px 4px;font-size:13px;line-height:1.4;color:#a64f78;white-space:nowrap;position:relative}
+#bakuClockWidget .bcw-weatherline:before{content:'♡';position:absolute;left:-13px;top:0;font-size:15px;color:#d77fa7}
+#bakuClockWidget .bcw-weatherline:after{content:'✧';position:absolute;right:-16px;bottom:-8px;font-size:19px;color:#e18db2}
+#bakuClockWidget .bcw-floaty{position:absolute;pointer-events:none;color:#df8eb4;line-height:1;animation:bcwFloat 4s ease-in-out infinite}
+#bakuClockWidget .bcw-floaty.f1{left:-25px;top:7px;font-size:17px;animation-delay:.2s}
+#bakuClockWidget .bcw-floaty.f2{right:0;bottom:-24px;font-size:20px;animation-delay:1s}
+#bakuClockWidget .bcw-floaty.f3{left:30px;bottom:-27px;font-size:17px;animation-delay:1.6s}
+#bakuClockWidget .bcw-floaty.f4{right:54px;top:-27px;font-size:13px;animation-delay:.7s}
+@keyframes bcwFloat{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@keyframes bcwTwinkle{0%,100%{opacity:.55;scale:.9}50%{opacity:1;scale:1.13}}
+@media(max-width:700px){#bakuClockWidget{top:26px;right:22px;width:250px;animation-delay:6.9s}#bakuClockWidget .bcw-time{font-size:38px}#bakuClockWidget .bcw-date{font-size:10px}#bakuClockWidget .bcw-weekday{font-size:11px}#bakuClockWidget .bcw-weatherline{font-size:11px}#bakuClockWidget .bcw-bow{font-size:26px}#bakuClockWidget .bcw-cat{font-size:22px}}
+
+/* Cozy lavender clock refinement: a small translucent lilac card with hanging stars. */
+#bakuClockWidget {
+  top: 34px !important;
+  right: 56px !important;
+  width: 305px !important;
+  gap: 7px !important;
+  color: #76608f !important;
+  text-shadow: none !important;
+  animation-delay: 6.9s;
+}
+#bakuClockWidget .bcw-main {
+  padding: 12px 13px 9px !important;
+  column-gap: 13px !important;
+  border: 1px solid rgba(179, 151, 207, .88);
+  border-radius: 19px 19px 17px 17px;
+  background: linear-gradient(145deg, rgba(246,239,255,.91), rgba(220,204,244,.88));
+  box-shadow: 0 7px 20px rgba(54, 36, 79, .16), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -2px 0 rgba(159,128,190,.18);
+  outline: 1px solid rgba(255,255,255,.55);
+  outline-offset: 3px;
+}
+/* Two still, clearly shaped pink stars hanging side by side. */
+#bakuClockWidget .bcw-main::before,
+#bakuClockWidget .bcw-main::after {
+  content: '★';
+  position: absolute;
+  top: 100%;
+  color: #e89bc1;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255,255,255,.82), 0 1px 3px rgba(198,112,157,.16);
+  transform: none !important;
+  animation: none !important;
+  background: linear-gradient(#e89bc1,#e89bc1) center top / 1.5px var(--string-length) no-repeat;
+  padding-top: calc(var(--string-length) + 1px);
+}
+#bakuClockWidget .bcw-main::before {
+  --string-length: 25px;
+  left: 34%;
+  font-size: 17px;
+}
+#bakuClockWidget .bcw-main::after {
+  --string-length: 15px;
+  left: 41%;
+  right: auto;
+  font-size: 14px;
+}
+#bakuClockWidget .bcw-time { color:#66507f !important; font-size:clamp(38px,3.9vw,50px) !important; letter-spacing:.2px !important; }
+#bakuClockWidget .bcw-ampm { color:#8b73aa !important; }
+#bakuClockWidget .bcw-date { color:#74608e !important; }
+#bakuClockWidget .bcw-weekday { color:#8a70a8 !important; }
+#bakuClockWidget .bcw-decor { color:#df8fb8 !important; }
+#bakuClockWidget .bcw-bow { top:-13px !important; left:13px !important; color:#e5a0c4 !important; filter:drop-shadow(0 2px 1px rgba(255,255,255,.85)); }
+#bakuClockWidget .bcw-heart, #bakuClockWidget .bcw-heart2 { color:#e58ab8 !important; }
+#bakuClockWidget .bcw-sparkle, #bakuClockWidget .bcw-star2 { color:#f0a5cb !important; }
+#bakuClockWidget .bcw-paw { color:#dfa0c0 !important; }
+#bakuClockWidget .bcw-cat { color:#e6a2c5 !important; }
+#bakuClockWidget .bcw-weatherline {
+  margin-right: 7px !important;
+  padding: 7px 12px 7px !important;
+  border: 1px solid rgba(179,151,207,.72);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(242,234,255,.9), rgba(216,201,239,.9));
+  box-shadow: 0 4px 12px rgba(54,36,79,.12), inset 0 1px 0 rgba(255,255,255,.9);
+  color:#6f598a !important;
+  font-size:13px !important;
+}
+#bakuClockWidget .bcw-weatherline:before,
+#bakuClockWidget .bcw-weatherline:after,
+#bakuClockWidget .bcw-floaty { color:#e89bc1 !important; }
+@keyframes bcwHang { 0%,100% { transform:rotate(-3deg); } 50% { transform:rotate(4deg); } }
+@media(max-width:700px) {
+  #bakuClockWidget { top:26px !important; right:22px !important; width:min(282px, calc(100vw - 44px)) !important; }
+  #bakuClockWidget .bcw-main { padding:11px 12px 9px !important; }
+  #bakuClockWidget .bcw-time { font-size:37px !important; }
+  #bakuClockWidget .bcw-main::before { left:34%; }
+  #bakuClockWidget .bcw-main::after { left:41%; }
+}
+
+</style>
+
+
+<style id="dreamy-kawaii-visual-refresh">
+/* Cohesive dreamy desktop finish: soft lavender glass, brighter rose details, and gentle depth. */
+:root { --dreamy-pink:#ff8fbd; --dreamy-pink-deep:#df5d9b; --dreamy-blush:#ffd6e8; --dreamy-lilac:#e7d7ff; }
+.desktop-container.theme-lavender .desktop-wallpaper {
+  background: radial-gradient(ellipse at 16% 82%,rgba(255,177,219,.72),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(225,194,255,.48),transparent 38%),
+    linear-gradient(160deg,#6f5a9d 0%,#8f72b8 40%,#b28ed0 72%,#d2a8d8 100%) !important;
+}
+.desktop-container.theme-lavender .lavender-cloud { filter:saturate(1.12) drop-shadow(0 5px 14px rgba(255,180,223,.14)); }
+.desktop-icon {
+  background:linear-gradient(145deg,rgba(255,245,252,.76),rgba(231,213,255,.58)) !important;
+  border:1.5px solid rgba(255,224,241,.86) !important;
+  box-shadow:0 8px 22px rgba(63,37,94,.14),inset 0 1px 0 rgba(255,255,255,.9) !important;
+  backdrop-filter:blur(12px) saturate(1.14) !important;
+}
+.desktop-icon:hover {
+  background:linear-gradient(145deg,rgba(255,250,253,.94),rgba(255,219,237,.86)) !important;
+  border-color:#ff9bc5 !important;
+  box-shadow:0 12px 26px rgba(223,93,155,.24),inset 0 1px 0 #fff !important;
+}
+.desktop-icon-label { color:#fff8ff !important; text-shadow:0 1px 4px rgba(53,31,83,.62),0 0 9px rgba(255,196,228,.5) !important; }
+.folder-art { filter:drop-shadow(0 4px 7px rgba(227,92,153,.28)) saturate(1.12) !important; }
+.desktop-taskbar {
+  height:52px !important;
+  background:linear-gradient(90deg,rgba(234,202,250,.82),rgba(255,203,229,.74),rgba(221,205,255,.82)) !important;
+  border-top:1px solid rgba(255,255,255,.92) !important;
+  box-shadow:0 -4px 20px rgba(62,36,91,.12),inset 0 1px 0 rgba(255,255,255,.86) !important;
+  backdrop-filter:blur(18px) saturate(1.18) !important;
+}
+.taskbar-start-btn { border-radius:14px !important; border:1px solid rgba(255,255,255,.9) !important; background:linear-gradient(145deg,#ffe0ee,#f6c7e5) !important; box-shadow:0 3px 9px rgba(207,98,153,.18),inset 0 1px 0 #fff !important; }
+/* Redesigned live clock widget, inspired by the supplied dreamy desktop reference. */
+#bakuClockWidget {
+  top:27px !important; right:36px !important; width:316px !important; gap:7px !important;
+  color:#86539c !important; text-shadow:none !important; filter:drop-shadow(0 7px 12px rgba(49,27,78,.14));
+}
+#bakuClockWidget .bcw-main {
+  overflow:visible !important; padding:15px 14px 12px !important; column-gap:10px !important;
+  border:2px solid #f7b2d5 !important; border-radius:25px 24px 28px 24px !important;
+  background:linear-gradient(145deg,rgba(255,241,250,.97),rgba(224,207,250,.94)) !important;
+  box-shadow:0 0 0 3px rgba(255,226,241,.62),0 7px 18px rgba(55,33,83,.2),inset 0 2px 0 #fff,inset 0 -3px 0 rgba(194,135,197,.14) !important;
+  outline:1px dashed rgba(255,255,255,.88) !important; outline-offset:-7px !important;
+}
+#bakuClockWidget .bcw-main::before,#bakuClockWidget .bcw-main::after { z-index:3; color:#ff80b7 !important; text-shadow:0 1px 0 white,0 2px 5px rgba(220,73,143,.2) !important; background-image:linear-gradient(#ff91bf,#ff91bf) !important; }
+#bakuClockWidget .bcw-main::before { left:31% !important; --string-length:28px !important; font-size:19px !important; }
+#bakuClockWidget .bcw-main::after { left:40% !important; --string-length:17px !important; font-size:16px !important; }
+#bakuClockWidget .bcw-time { color:#75439a !important; font-size:clamp(39px,3.8vw,49px) !important; font-weight:800 !important; letter-spacing:-1px !important; text-shadow:0 1px 0 rgba(255,255,255,.8) !important; }
+#bakuClockWidget .bcw-ampm { color:#a56cba !important; }
+#bakuClockWidget .bcw-date { color:#81519b !important; font-size:12px !important; font-weight:700 !important; }
+#bakuClockWidget .bcw-weekday { color:#a35bb0 !important; font-size:13px !important; font-weight:700 !important; }
+#bakuClockWidget .bcw-bow { top:-21px !important; left:-8px !important; width:76px !important; height:54px !important; transform:rotate(-10deg) !important; filter:drop-shadow(0 3px 2px rgba(183,65,128,.2)) !important; z-index:5 !important; }
+#bakuClockWidget .bcw-bow svg { display:block; width:100%; height:100%; overflow:visible; }
+#bakuClockWidget .bcw-heart { right:16px !important; top:-20px !important; width:31px !important; height:28px !important; z-index:4; }
+#bakuClockWidget .bcw-heart2 { left:54% !important; bottom:-24px !important; width:36px !important; height:33px !important; z-index:4; }
+#bakuClockWidget .bcw-heart svg,#bakuClockWidget .bcw-heart2 svg { display:block;width:100%;height:100%;overflow:visible; }
+#bakuClockWidget .bcw-heart svg path,#bakuClockWidget .bcw-heart2 svg path { fill:#ffb3d2;stroke:#e45a9a;stroke-width:2.7;stroke-linejoin:round;filter:drop-shadow(0 2px 1px rgba(255,255,255,.9)); }
+#bakuClockWidget .bcw-sparkle,#bakuClockWidget .bcw-star2 { color:#ff80b5 !important; text-shadow:0 0 8px rgba(255,167,211,.9) !important; }
+#bakuClockWidget .bcw-paw { color:#f27eaf !important; }
+#bakuClockWidget .bcw-bunny { position:absolute !important; right:8px !important; top:-34px !important; width:54px !important; height:48px !important; z-index:6 !important; }
+#bakuClockWidget .bcw-bunny i { position:absolute; bottom:9px; width:18px; height:37px; border:2px solid #d95799; border-radius:60% 60% 48% 48%; background:linear-gradient(90deg,#fff3fa,#ffc4df); box-shadow:inset 0 0 0 3px rgba(255,255,255,.56),0 2px 3px rgba(168,68,125,.16); transform-origin:bottom center; }
+#bakuClockWidget .bcw-bunny i:first-child { left:8px; transform:rotate(-13deg); }
+#bakuClockWidget .bcw-bunny i:nth-child(2) { left:28px; height:34px; transform:rotate(11deg); }
+#bakuClockWidget .bcw-bunny b { position:absolute; bottom:0; left:9px; width:38px; height:18px; border:2px solid #d95799; border-bottom:0; border-radius:22px 22px 0 0; background:linear-gradient(180deg,#fff8fc,#ffd4e7); }
+#bakuClockWidget .bcw-bunny b:before,#bakuClockWidget .bcw-bunny b:after { content:'';position:absolute;top:8px;width:4px;height:4px;border-radius:50%;background:#b54c83; }
+#bakuClockWidget .bcw-bunny b:before {left:10px} #bakuClockWidget .bcw-bunny b:after {right:10px}
+#bakuClockWidget .bcw-weatherline { align-self:flex-end !important; margin-right:4px !important; padding:7px 13px !important; border:2px solid #f5b6d7 !important; border-radius:18px 18px 21px 18px !important; background:linear-gradient(145deg,rgba(255,240,250,.97),rgba(222,207,249,.96)) !important; box-shadow:0 4px 13px rgba(55,33,83,.16),inset 0 1px 0 white !important; color:#83529b !important; font-size:12px !important; font-weight:700 !important; }
+#bakuClockWidget .bcw-weatherline:before,#bakuClockWidget .bcw-weatherline:after,#bakuClockWidget .bcw-floaty { color:#ff70ad !important; text-shadow:0 1px 0 white,0 0 7px rgba(255,156,204,.65) !important; }
+#bakuClockWidget .bcw-floaty { animation:none !important; }
+#bakuClockWidget .bcw-heart,#bakuClockWidget .bcw-heart2,#bakuClockWidget .bcw-sparkle,#bakuClockWidget .bcw-star2 { animation:none !important; }
+@media(max-width:700px) {
+ #bakuClockWidget { top:25px !important; right:14px !important; width:min(292px,calc(100vw - 28px)) !important; }
+ #bakuClockWidget .bcw-main { padding:13px 12px 11px !important; }
+ #bakuClockWidget .bcw-time { font-size:37px !important; }
+ #bakuClockWidget .bcw-bow { width:61px !important;height:44px !important;top:-17px !important; }
+ #bakuClockWidget .bcw-bunny { transform:scale(.84);transform-origin:bottom right;right:5px !important;top:-31px !important; }
+}
+</style>
+
 </head>
 <body>
+
+<div id="bakuClockWidget" aria-label="Baku date, time, and weather">
+  <div class="bcw-main">
+    <span class="bcw-decor bcw-bow" aria-hidden="true"><svg viewBox="0 0 76 54" role="presentation"><path d="M37 25C25 6 9 4 7 18C5 29 18 36 37 29Z" fill="#ff8fbd" stroke="#cf4f91" stroke-width="2.3"/><path d="M39 25C50 5 67 6 69 18C71 29 57 36 39 29Z" fill="#ffb4d3" stroke="#cf4f91" stroke-width="2.3"/><path d="M37 27L26 43L39 38L48 46L43 28Z" fill="#f87eb0" stroke="#cf4f91" stroke-width="2"/><ellipse cx="38" cy="26" rx="7" ry="6" fill="#ffe4f0" stroke="#cf4f91" stroke-width="2"/><path d="M13 17Q22 12 29 22M48 22Q57 12 64 17" fill="none" stroke="#fff0f7" stroke-width="2" stroke-linecap="round"/></svg></span>
+    <span class="bcw-decor bcw-heart" aria-hidden="true"><svg viewBox="0 0 40 36"><path d="M20 32C16 27 3 19 3 11C3 2 14 0 20 9C26 0 37 2 37 11C37 19 24 27 20 32Z"/></svg></span>
+    <span class="bcw-decor bcw-sparkle" aria-hidden="true">✧</span>
+    <span class="bcw-decor bcw-heart2" aria-hidden="true"><svg viewBox="0 0 40 36"><path d="M20 32C16 27 3 19 3 11C3 2 14 0 20 9C26 0 37 2 37 11C37 19 24 27 20 32Z"/></svg></span>
+    <span class="bcw-decor bcw-star2" aria-hidden="true">✦</span>
+    <span class="bcw-decor bcw-paw" aria-hidden="true">♧</span>
+    <span class="bcw-floaty f1" aria-hidden="true">♡</span>
+    <span class="bcw-floaty f2" aria-hidden="true">✧</span>
+    <span class="bcw-floaty f3" aria-hidden="true">♡</span>
+    <span class="bcw-floaty f4" aria-hidden="true">✦</span>
+    <div class="bcw-time" id="bcwTime">--:--</div>
+    <div class="bcw-date"><div id="bcwDate">----.--.--</div><div class="bcw-weekday" id="bcwWeekday">--------</div></div>
+  </div>
+  <div class="bcw-weatherline" id="bcwWeather">Baku · loading weather...</div>
+</div>
+<script id="bakuClockWeatherWidgetScript">
+(function(){
+ const zone='Asia/Baku';
+ const timeEl=document.getElementById('bcwTime'), dateEl=document.getElementById('bcwDate'), dayEl=document.getElementById('bcwWeekday'), weatherEl=document.getElementById('bcwWeather');
+ const timeFmt=new Intl.DateTimeFormat('en-US',{timeZone:zone,hour:'numeric',minute:'2-digit',hour12:true});
+ const dateFmt=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'});
+ const dayFmt=new Intl.DateTimeFormat('en-US',{timeZone:zone,weekday:'long'});
+ function tick(){const now=new Date();timeEl.textContent=timeFmt.format(now);dateEl.textContent=dateFmt.format(now).replaceAll('-','.');dayEl.textContent=dayFmt.format(now);}
+ tick();setInterval(tick,1000);
+ function weatherLabel(code){if(code===0)return 'clear skies';if([1,2].includes(code))return 'partly cloudy';if(code===3)return 'cloudy';if([45,48].includes(code))return 'foggy';if([51,53,55,56,57].includes(code))return 'drizzle';if([61,63,65,66,67,80,81,82].includes(code))return 'rainy';if([71,73,75,77,85,86].includes(code))return 'snowy';if([95,96,99].includes(code))return 'thunderstorms';return 'weather unavailable';}
+ async function loadWeather(){try{const res=await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.4093&longitude=49.8671&current=temperature_2m,weather_code&timezone=Asia%2FBaku');if(!res.ok)throw new Error('weather request failed');const data=await res.json();const c=data.current;weatherEl.textContent='Baku · '+Math.round(c.temperature_2m)+'°C · '+weatherLabel(c.weather_code);}catch(e){weatherEl.textContent='Baku · weather unavailable';}}
+ loadWeather();setInterval(loadWeather,30*60*1000);
+})();
+</script>
+
 
     <!-- Lavender Desktop Environment -->
     <div class="desktop-container">
@@ -4303,17 +4692,17 @@ html body .deep-thoughts-release-btn:disabled {
 
         <!-- Desktop Icons -->
         <div class="desktop-icons-area">
-            <!-- Row 1: gf stats → need comfort? → deep thoughts -->
-            <div class="desktop-icon" onclick="openApp('stats')">
+            <!-- Row 1: Daily check-in → need comfort? → deep thoughts -->
+            <div class="desktop-icon daily-checkin-desktop-icon" onclick="openApp('dailyCheckin')" aria-label="Daily check-in">
                 <div class="folder-art">
                     <div class="folder-tab"></div>
                     <div class="folder-back"></div>
-                    <div class="folder-paper">💖</div>
+                    <div class="folder-paper daily-checkin-icon-mark">♡</div>
                     <div class="folder-front"></div>
                     <div class="sparkle sparkle-1">✨</div>
                     <div class="sparkle sparkle-2">✨</div>
                 </div>
-                <span class="desktop-icon-label">girlfriend.exe</span>
+                <span class="desktop-icon-label">Daily check-in</span>
             </div>
             <div class="desktop-icon" onclick="openApp('needComfort')">
                 <div class="folder-art">
@@ -4387,7 +4776,22 @@ html body .deep-thoughts-release-btn:disabled {
                 </div>
                 <span class="desktop-icon-label">mini game</span>
             </div>
+
+            <div class="desktop-icon girlfriend-exe-desktop-icon" onclick="openApp('stats')" aria-label="girlfriend.exe">
+                <div class="folder-art">
+                    <div class="folder-tab"></div>
+                    <div class="folder-back"></div>
+                    <div class="folder-paper">💖</div>
+                    <div class="folder-front"></div>
+                    <div class="sparkle sparkle-1">✨</div>
+                    <div class="sparkle sparkle-2">✨</div>
+                </div>
+                <span class="desktop-icon-label">girlfriend.exe</span>
+            </div>
         </div>
+
+        <!-- Daily check-in save confirmation bubble -->
+        <div id="dailyCheckinSavedBubble" class="daily-checkin-saved-bubble" role="status" aria-live="polite">saved!</div>
 
         <!-- Peeking Bunny -->
         <div class="peeking-bunny" id="peekingBunny" onclick="makeBunnyHappy()" aria-label="Happy bunny" role="button" tabindex="0">
@@ -4418,37 +4822,47 @@ html body .deep-thoughts-release-btn:disabled {
                 <button class="taskbar-start-btn" onclick="location.reload()">
                     <span class="pixel-heart"></span> START
                 </button>
+                <div class="desktop-search-wrap" id="desktopSearchWrap">
+                    <label class="desktop-search-box" aria-label="Search apps">
+                        <span class="desktop-search-glass" aria-hidden="true">⌕</span>
+                        <input id="desktopAppSearch" type="search" autocomplete="off" placeholder="Search" aria-label="Search apps" />
+                    </label>
+                    <div id="desktopSearchResults" class="desktop-search-results" role="listbox" aria-label="Matching apps" hidden></div>
+                </div>
 
                 <button class="taskbar-icon-btn" id="taskbarStats" onclick="toggleStatsFromTaskbar()">
-                    <span class="taskbar-icon-symbol">💖</span> girlfriend.exe
+                    <span class="taskbar-icon-symbol custom-taskbar-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 26S4.5 19 4.5 11.5C4.5 5.5 12 4 16 10c4-6 11.5-4.5 11.5 1.5C27.5 19 16 26 16 26Z" fill="#f6a8cc" stroke="#b96d9d" stroke-width="1.5"/><path d="M10 11c1-2 3-2 4-1" fill="none" stroke="#fff2fa" stroke-width="1.5" stroke-linecap="round"/></svg></span> girlfriend.exe
                 </button>
                 <button class="taskbar-icon-btn" id="taskbarNeedComfort" onclick="toggleNeedComfortFromTaskbar()">
                     <span class="taskbar-icon-symbol comfort-taskbar-envelope" aria-hidden="true"></span> need comfort?
                 </button>
                 <button class="taskbar-icon-btn" id="taskbarDeepThoughts" onclick="toggleDeepThoughtsFromTaskbar()">
-                    <span class="taskbar-icon-symbol">🌙</span> deep thoughts
+                    <span class="taskbar-icon-symbol custom-taskbar-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M23.7 21.8A11.3 11.3 0 0 1 10.2 8.3 11.7 11.7 0 1 0 23.7 21.8Z" fill="#c6b4ee" stroke="#8f7bb8" stroke-width="1.5"/><path d="m23 6 .8 2.2L26 9l-2.2.8L23 12l-.8-2.2L20 9l2.2-.8Z" fill="#f4c2dc"/></svg></span> deep thoughts
                 </button>
                 <button class="taskbar-icon-btn" id="taskbarMusicPlayer" onclick="toggleMusicFromTaskbar()">
-                    <span class="taskbar-icon-symbol">🎵</span> music player
+                    <span class="taskbar-icon-symbol custom-taskbar-icon" aria-hidden="true"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="15.8" cy="16.2" r="12.1" fill="#d9c5f4" stroke="#9e83c4" stroke-width="1.4"/><circle cx="15.8" cy="16.2" r="9.3" fill="none" stroke="#b29bd4" stroke-width=".9"/><circle cx="15.8" cy="16.2" r="6.5" fill="none" stroke="#b29bd4" stroke-width=".9"/><circle cx="15.8" cy="16.2" r="4.1" fill="#f5b8d5" stroke="#c77ca6" stroke-width="1.1"/><path d="M15.8 13.7c-1.4-1.7-3.5-.3-2.6 1.3.5.9 2.6 2.5 2.6 2.5s2.1-1.6 2.6-2.5c.9-1.6-1.2-3-2.6-1.3Z" fill="#fff1f8"/><path d="m24.8 4.3.8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8Z" fill="#f5b8d5" stroke="#c77ca6" stroke-width=".55"/><path d="m5.2 22.5.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5Z" fill="#fff0f8"/></svg></span> music player
                 </button>
                 <button class="taskbar-icon-btn" id="taskbarPomodoro" onclick="togglePomodoroFromTaskbar()">
-                    <span class="taskbar-icon-symbol">🍅</span> pomodoro
+                    <span class="taskbar-icon-symbol custom-taskbar-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 9c-7.4 0-11 4.8-10 11.1.7 4.3 4.4 6.7 10 6.7s9.3-2.4 10-6.7C27 13.8 23.4 9 16 9Z" fill="#f6a6b8" stroke="#bf6f8d" stroke-width="1.5"/><path d="M16 9c-2-3-5-3.2-7-2 2.9-.1 4.2 2.3 4.8 4M16 9c1-3.3 4-4.5 6.4-3.6-2.4.7-3.2 2.8-3.4 4.2" fill="#b8d9b3" stroke="#719b7b" stroke-width="1.3" stroke-linejoin="round"/><path d="M11 15c-1.5 2-1.5 4.1-.5 5.5" fill="none" stroke="#ffeaf1" stroke-width="1.5" stroke-linecap="round"/></svg></span> pomodoro
                 </button>
                 <button class="taskbar-icon-btn" id="taskbarStickyNotes" onclick="toggleStickyNotesFromTaskbar()">
-                    <span class="taskbar-icon-symbol">📝</span> sticky notes
+                    <span class="taskbar-icon-symbol custom-taskbar-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M7 4.8h13l5 5v17H7Z" fill="#ffe7a8" stroke="#c8a66d" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 5v5h5M11 15h10M11 19h8" fill="none" stroke="#b98f60" stroke-width="1.5" stroke-linecap="round"/><path d="m19 27 6-6v6Z" fill="#f7d58b"/></svg></span> sticky notes
                 </button>
                 <button class="taskbar-icon-btn" id="taskbarMiniGame" onclick="toggleMiniGameFromTaskbar()">
                     <img class="taskbar-icon-symbol mini-game-taskbar-icon" src="data:image/png;base64,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" alt=""> mini game
+                </button>
+                <button class="taskbar-icon-btn" id="taskbarDailyCheckin" onclick="toggleDailyCheckinFromTaskbar()">
+                    <span class="taskbar-icon-symbol custom-taskbar-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="5" y="7" width="22" height="21" rx="5" fill="#e8dcfa" stroke="#a58cc9" stroke-width="1.5"/><path d="M10 4v6M22 4v6M5 12h22" stroke="#a58cc9" stroke-width="1.6" stroke-linecap="round"/><path d="M11 19l3 3 7-7" fill="none" stroke="#b66f9b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Daily check-in
                 </button>
             </div>
 
             <div class="taskbar-tray">
                 <div class="sweet-message-wrap">
-                    <button class="sweet-message-btn" id="sweetMessageBtn" onclick="showSweetMessage()" aria-label="Show a sweet message">✉️</button>
+                    <button class="sweet-message-btn" id="sweetMessageBtn" onclick="showSweetMessage()" aria-label="Show a sweet message"><span class="tray-line-icon tray-envelope" aria-hidden="true"></span></button>
                     <div class="sweet-message-pop" id="sweetMessagePop" aria-live="polite">you are lovely ♡</div>
                 </div>
-                <button class="sound-toggle-btn" id="soundToggleBtn" onclick="toggleAllSounds()" aria-label="Mute all sounds">🔊</button>
-                <button class="wallpaper-theme-btn" id="wallpaperThemeBtn" onclick="cycleWallpaperTheme()" aria-label="Change wallpaper">☁️</button>
+                <button class="sound-toggle-btn" id="soundToggleBtn" onclick="toggleAllSounds()" aria-label="Mute all sounds"><span class="tray-line-icon tray-speaker" aria-hidden="true"></span></button>
+                <button class="wallpaper-theme-btn" id="wallpaperThemeBtn" onclick="cycleWallpaperTheme()" aria-label="Change wallpaper"><span class="tray-line-icon tray-cloud" aria-hidden="true"></span></button>
                 <span id="clockDisplay">12:08 PM</span>
             </div>
         </div>
@@ -4517,6 +4931,88 @@ html body .deep-thoughts-release-btn:disabled {
                         </div>
                     </div>
                 </article>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Mood Check-in Window -->
+    <div id="dailyCheckinWindow" class="daily-checkin-window">
+        <div class="window-titlebar" id="dailyCheckinTitlebar">
+            <div class="daily-checkin-title-copy"><span>Daily Mood Check-in</span></div>
+            <div class="window-controls">
+                <button class="window-btn" onclick="minimizeDailyCheckin()" aria-label="Minimize Daily Mood Check-in">_</button>
+                <button class="window-btn" onclick="closeDailyCheckin()" aria-label="Close Daily Mood Check-in">×</button>
+            </div>
+        </div>
+        <div class="daily-checkin-body">
+            <section class="daily-checkin-section">
+                <h3>today i feel...</h3>
+                <p class="daily-checkin-hint">you can pick more than one!</p>
+                <div class="daily-mood-grid" id="dailyMoodGrid">
+                    <button type="button" class="daily-mood-option" data-mood="happy" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-happy" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><circle class="eye-fill" cx="23" cy="27" r="2.8"/><circle class="eye-fill" cx="41" cy="27" r="2.8"/><path class="mouth" d="M22 37 Q32 49 42 37"/></svg><small>happy</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="silly" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-silly" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M20 25 Q23 21 26 25 M38 25 Q41 21 44 25"/><circle class="eye-fill" cx="24" cy="28" r="2"/><circle class="eye-fill" cx="40" cy="28" r="2"/><path class="mouth" d="M22 36 Q32 48 42 36"/><path class="mouth-fill" d="M29 42 Q34 40 37 42 Q36 48 32 47 Q29 46 29 42Z"/></svg><small>silly</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="excited" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-excited" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M18 27 Q23 22 28 27 M36 27 Q41 22 46 27"/><path class="mouth" d="M21 35 Q32 51 43 35 Q32 39 21 35Z"/><path d="M24 37 Q32 42 40 37 L38 41 Q32 44 26 41Z" fill="#fffafc" stroke="#74445a" stroke-width="1.4" stroke-linejoin="round"/></svg><small>excited</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="loving" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-loving" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="mouth-fill" stroke="none" d="M23 24 C18 19 12 26 23 34 C34 26 28 19 23 24Z"/><path class="mouth-fill" stroke="none" d="M41 24 C36 19 30 26 41 34 C52 26 46 19 41 24Z"/><path class="mouth" d="M23 38 Q32 46 41 38"/></svg><small>loving</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="sad" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-sad" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><circle class="eye-fill" cx="23" cy="27" r="2.8"/><circle class="eye-fill" cx="41" cy="27" r="2.8"/><path class="detail" d="M46 31 Q50 36 46 39 Q42 36 46 31Z"/><path class="mouth" d="M23 43 Q32 33 41 43"/></svg><small>sad</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="lonely" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-lonely" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><circle class="eye-fill" cx="23" cy="28" r="2.5"/><circle class="eye-fill" cx="41" cy="28" r="2.5"/><path class="detail" d="M47 33 Q50 37 47 40 Q44 37 47 33Z"/><path class="mouth" d="M25 42 Q32 38 39 42"/></svg><small>lonely</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="upset" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-upset" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="brow" d="M18 22 L27 25 M37 25 L46 22"/><circle class="eye-fill" cx="23" cy="29" r="2.5"/><circle class="eye-fill" cx="41" cy="29" r="2.5"/><path class="mouth" d="M23 43 Q32 37 41 43"/></svg><small>upset</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="stressed" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-stressed" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M20 24 L27 28 L20 32 M44 24 L37 28 L44 32"/><path class="mouth" d="M24 40 l4 -3 l4 3 l4 -3 l4 3"/><path class="detail" d="M15 31 l-3 3 M49 31 l3 3"/></svg><small>stressed</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="worried" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-worried" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="brow" d="M18 22 Q23 27 28 22 M36 22 Q41 27 46 22"/><circle class="eye-fill" cx="23" cy="28" r="2.7"/><circle class="eye-fill" cx="41" cy="28" r="2.7"/><path class="mouth" d="M26 42 Q32 37 38 42"/></svg><small>worried</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="unsure" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-unsure" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><circle class="eye-fill" cx="23" cy="27" r="2.8"/><circle class="eye-fill" cx="41" cy="27" r="2.8"/><path class="mouth" d="M25 40 Q29 37 32 40 T39 40"/></svg><small>unsure</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="scared" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-scared" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><circle class="eye" cx="23" cy="27" r="5"/><circle class="eye-fill" cx="23" cy="27" r="2.5"/><circle class="eye" cx="41" cy="27" r="5"/><circle class="eye-fill" cx="41" cy="27" r="2.5"/><ellipse class="mouth-fill" cx="32" cy="41" rx="4.5" ry="6"/></svg><small>scared</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="tired" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-tired" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M18 26 Q23 32 28 28 M36 28 Q41 32 46 26"/><path class="detail" d="M18 25 Q23 28 28 25 M36 25 Q41 28 46 25"/><path class="mouth" d="M26 41 Q32 38 38 41"/></svg><small>tired</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="exhausted" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-exhausted" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M18 26 Q23 31 28 26 M36 26 Q41 31 46 26"/><path class="detail" d="M17 32 l-2 3 M47 32 l2 3"/><path class="mouth" d="M24 41 Q27 38 30 41 T36 41 T40 41"/></svg><small>exhausted</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="sleepy" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-sleepy" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M18 27 Q23 30 28 27 M36 27 Q41 30 46 27"/><path class="detail" d="M45 17 l5 -4 M48 22 l6 -1"/><path class="mouth" d="M27 40 Q32 43 37 40"/></svg><small>sleepy</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="hungry" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-hungry" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M19 24 L27 28 L19 32 M45 24 L37 28 L45 32"/><path class="mouth" d="M25 40 Q29 37 32 40 T39 40"/><g class="burger-detail" transform="translate(43 5) scale(.72)" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8 Q2 1 10 1 Q18 1 19 8Z" fill="#f3c58e" stroke="#b77d54" stroke-width="1.5"/><path d="M1 9 H19" stroke="#79a96b" stroke-width="2.5"/><path d="M2 11 H18" stroke="#d58b54" stroke-width="2.5"/><path d="M2 13 Q10 17 18 13 L18 15 Q10 19 2 15Z" fill="#f3c58e" stroke="#b77d54" stroke-width="1.4"/><path d="M5 4 L6 4 M10 3 L11 3 M14 5 L15 5" stroke="#fff1c9" stroke-width="1.4"/></g></svg><small>hungry</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="sick" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-sick" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M19 24 L27 28 L19 32 M45 24 L37 28 L45 32"/><path class="mouth" d="M25 41 Q28 38 31 41 T38 41"/></svg><small>sick</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="bored" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-bored" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M18 26 H28 M36 26 H46"/><path class="mouth" d="M26 40 H38"/></svg><small>bored</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="relaxed" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-relaxed" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M18 27 Q23 30 28 27 M36 27 Q41 30 46 27"/><path class="mouth" d="M23 37 Q32 47 41 37"/></svg><small>relaxed</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="lazy" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-lazy" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><path class="eye" d="M18 29 Q23 34 28 29 M36 29 Q41 34 46 29"/><path class="eye" d="M18 28 H28 M36 28 H46"/><path class="mouth" d="M26 41 Q32 43 38 41"/></svg><small>lazy</small></button>
+                    <button type="button" class="daily-mood-option" data-mood="normal" aria-pressed="false" onclick="toggleDailyMood(this)"><svg class="mood-face mood-normal" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="face-base" cx="32" cy="32" r="25"/><circle class="cheek" cx="15" cy="36" r="4"/><circle class="cheek" cx="49" cy="36" r="4"/><circle class="eye-fill" cx="23" cy="27" r="2.6"/><circle class="eye-fill" cx="41" cy="27" r="2.6"/><path class="mouth" d="M25 38 Q32 43 39 38"/></svg><small>normal</small></button>
+                </div>
+            </section>
+            <section class="daily-checkin-section daily-rating-section">
+                <div class="daily-rating-heading"><h3>your energy level...</h3></div>
+                <div class="daily-heart-row" role="group" aria-label="Your energy level">
+                    <button type="button" class="daily-heart" data-kind="energy" data-heart="1" aria-label="Set energy to 1 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('energy', 1)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="energy" data-heart="2" aria-label="Set energy to 2 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('energy', 2)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="energy" data-heart="3" aria-label="Set energy to 3 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('energy', 3)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="energy" data-heart="4" aria-label="Set energy to 4 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('energy', 4)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="energy" data-heart="5" aria-label="Set energy to 5 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('energy', 5)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                </div>
+                <input id="dailyEnergyLevel" type="hidden" value="0">
+                <div class="daily-rating-ends"><span>no energy</span><span>full of energy</span></div>
+            </section>
+            <section class="daily-checkin-section daily-rating-section">
+                <div class="daily-rating-heading"><h3>your stress level...</h3></div>
+                <div class="daily-heart-row" role="group" aria-label="Your stress level">
+                    <button type="button" class="daily-heart" data-kind="stress" data-heart="1" aria-label="Set stress to 1 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('stress', 1)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="stress" data-heart="2" aria-label="Set stress to 2 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('stress', 2)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="stress" data-heart="3" aria-label="Set stress to 3 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('stress', 3)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="stress" data-heart="4" aria-label="Set stress to 4 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('stress', 4)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="stress" data-heart="5" aria-label="Set stress to 5 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('stress', 5)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                </div>
+                <input id="dailyStressLevel" type="hidden" value="0">
+                <div class="daily-rating-ends"><span>calm</span><span>overwhelmed</span></div>
+            </section>
+            <section class="daily-checkin-section daily-rating-section">
+                <div class="daily-rating-heading"><h3>your love for me... :3</h3></div>
+                <div class="daily-heart-row" role="group" aria-label="Your love for me">
+                    <button type="button" class="daily-heart" data-kind="love" data-heart="1" aria-label="Set love to 1 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('love', 1)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="love" data-heart="2" aria-label="Set love to 2 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('love', 2)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="love" data-heart="3" aria-label="Set love to 3 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('love', 3)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="love" data-heart="4" aria-label="Set love to 4 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('love', 4)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                    <button type="button" class="daily-heart" data-kind="love" data-heart="5" aria-label="Set love to 5 out of 5 hearts" aria-pressed="false" onclick="setDailyHeartRating('love', 5)"><svg viewBox="0 0 32 30" aria-hidden="true" focusable="false"><path d="M16 27 C13 24 3 17 3 10 C3 3 12 1 16 8 C20 1 29 3 29 10 C29 17 19 24 16 27Z"/></svg></button>
+                </div>
+                <input id="dailyLoveLevel" type="hidden" value="0">
+                <div class="daily-rating-ends"><span>love u.. yeah..</span><span>LOVE YOU LOTS!! ♡</span></div>
+            </section>
+            <section class="daily-checkin-section daily-checkin-note-section">
+                <label for="dailyCheckinNote">wanna maybe talk about your day..?</label>
+                <textarea id="dailyCheckinNote" maxlength="500" rows="3" placeholder="you can write a little here... ♡"></textarea>
+            </section>
+            <div class="daily-checkin-footer">
+                <button type="button" class="daily-checkin-save" onclick="saveDailyCheckin()">♡ save ♡</button>
             </div>
         </div>
     </div>
@@ -5035,9 +5531,9 @@ html body .deep-thoughts-release-btn:disabled {
 
         /* ─── WALLPAPER THEMES ─── */
         const wallpaperThemes = [
-            { className: 'theme-lavender', icon: '☁️', title: 'Lavender clouds — click for pink roses' },
-            { className: 'theme-rose', icon: '🌹', title: 'Pink roses — click for the night sky' },
-            { className: 'theme-night', icon: '☾', title: 'Moonlit night — click for lavender clouds' }
+            { className: 'theme-lavender', title: 'Lavender clouds — click for pink roses' },
+            { className: 'theme-rose', title: 'Pink roses — click for the night sky' },
+            { className: 'theme-night', title: 'Moonlit night — click for lavender clouds' }
         ];
         let currentWallpaperTheme = Number(localStorage.getItem('cozy_wallpaper_theme') || 0);
         if (!Number.isInteger(currentWallpaperTheme) || currentWallpaperTheme < 0 || currentWallpaperTheme >= wallpaperThemes.length) {
@@ -5052,7 +5548,17 @@ html body .deep-thoughts-release-btn:disabled {
 
             desktop.classList.remove('theme-lavender', 'theme-rose', 'theme-night');
             desktop.classList.add(theme.className);
-            button.textContent = theme.icon;
+            button.classList.remove('wallpaper-lavender-icon','wallpaper-rose-icon','wallpaper-night-icon');
+            const icon = button.querySelector('.tray-cloud');
+            if (icon) {
+                icon.className = 'tray-line-icon tray-cloud';
+                icon.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;position:relative;';
+                icon.innerHTML = theme.className === 'theme-lavender'
+                    ? '<svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true"><path d="M6 20.5h15a4 4 0 0 0 .2-8 7 7 0 0 0-13.5-1.2A4.7 4.7 0 0 0 6 20.5Z" fill="#f8f0ff" stroke="#9d7ab7" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 16.8h9" stroke="#d7bce9" stroke-width="1.2" stroke-linecap="round"/></svg>'
+                    : theme.className === 'theme-rose'
+                    ? '<svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true"><path d="M14 14.5c-5.2-1-5.6-6.5-1.9-7.5 1.1-.3 1.8.3 1.9 1.1.8-2.4 4.9-2.3 5.4.6.6 3.1-2.4 5.3-5.4 5.8Z" fill="#f4a9cd" stroke="#bd79a4" stroke-width="1.2"/><path d="M14 14.2c-4.3-3.2-7.4 1.5-3.4 3.3-3.2 1.9-.5 5.1 3.4 2.2 3.7 2.8 6.5-.4 3.4-2.2 4-1.8.9-6.5-3.4-3.3Z" fill="#f8c5df" stroke="#bd79a4" stroke-width="1.1"/><path d="M14 20v5m0-2.5-4-1.7m4 0 3.7-1.7" fill="none" stroke="#80a987" stroke-width="1.5" stroke-linecap="round"/></svg>'
+                    : '<svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true"><path d="M19.8 19.5A9 9 0 0 1 9 6.2a9.2 9.2 0 1 0 10.8 13.3Z" fill="#c7b5ee" stroke="#9380bd" stroke-width="1.3"/><path d="m20.5 5 .8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8Z" fill="#f4bfdc"/><circle cx="7" cy="7" r="1" fill="#f4bfdc"/><circle cx="22" cy="17" r=".8" fill="#f4bfdc"/></svg>';
+            }
             button.setAttribute('aria-label', theme.title);
             localStorage.setItem('cozy_wallpaper_theme', String(currentWallpaperTheme));
         }
@@ -5097,7 +5603,7 @@ html body .deep-thoughts-release-btn:disabled {
 
         function updateSoundToggleUI() {
             const button = document.getElementById('soundToggleBtn');
-            button.textContent = isAllSoundsMuted ? '🔇' : '🔊';
+            button.classList.toggle('is-muted', isAllSoundsMuted);
             button.setAttribute('aria-label', isAllSoundsMuted ? 'Unmute all sounds' : 'Mute all sounds');
             button.classList.toggle('is-muted', isAllSoundsMuted);
             if (typeof audioElement !== 'undefined' && audioElement) {
@@ -5118,12 +5624,12 @@ html body .deep-thoughts-release-btn:disabled {
             if (!win) return;
             topWindowZ += 1;
             win.style.zIndex = String(topWindowZ);
-            document.querySelectorAll('.pomodoro-window, .music-window, .stats-window, .deep-thoughts-window, .sticky-notes-window, .comfort-window').forEach(other => {
+            document.querySelectorAll('.pomodoro-window, .music-window, .stats-window, .deep-thoughts-window, .sticky-notes-window, .comfort-window, .daily-checkin-window').forEach(other => {
                 other.classList.toggle('window-active', other === win);
             });
         }
 
-        document.querySelectorAll('.pomodoro-window, .music-window, .stats-window, .deep-thoughts-window, .sticky-notes-window, .comfort-window, .mini-game-window').forEach(win => {
+        document.querySelectorAll('.pomodoro-window, .music-window, .stats-window, .deep-thoughts-window, .sticky-notes-window, .comfort-window, .mini-game-window, .daily-checkin-window').forEach(win => {
             win.addEventListener('mousedown', () => bringWindowToFront(win));
             win.addEventListener('pointerdown', () => bringWindowToFront(win));
         });
@@ -5213,6 +5719,21 @@ html body .deep-thoughts-release-btn:disabled {
                 }
                 const taskbarIcon = document.getElementById('taskbarMiniGame');
                 if (taskbarIcon) taskbarIcon.style.display = 'flex';
+                bringWindowToFront(win);
+            } else if (appName === 'dailyCheckin') {
+                const win = document.getElementById('dailyCheckinWindow');
+                if (!win) return;
+                win.classList.remove('minimized');
+                win.style.display = 'flex';
+                if (!win.dataset.initialized) {
+                    const rect = win.getBoundingClientRect();
+                    win.style.transform = 'none';
+                    win.style.left = Math.max(10, (window.innerWidth - rect.width) / 2) + 'px';
+                    win.style.top = Math.max(10, (window.innerHeight - rect.height) / 2) + 'px';
+                    win.dataset.initialized = 'true';
+                }
+                document.getElementById('taskbarDailyCheckin').style.display = 'flex';
+                loadDailyCheckin();
                 bringWindowToFront(win);
             } else if (appName === 'musicPlayer') {
                 const win = document.getElementById('musicWindow');
@@ -5487,6 +6008,283 @@ html body .deep-thoughts-release-btn:disabled {
             win.style.transform = 'none';
             document.getElementById('taskbarStats').style.display = 'none';
         }
+
+        function toggleDailyCheckinFromTaskbar() {
+            const win = document.getElementById('dailyCheckinWindow');
+            if (!win) return;
+            if (win.style.display === 'none' || win.classList.contains('minimized')) {
+                openApp('dailyCheckin');
+            } else {
+                minimizeDailyCheckin();
+            }
+        }
+
+        function minimizeDailyCheckin() {
+            const win = document.getElementById('dailyCheckinWindow');
+            const taskbarIcon = document.getElementById('taskbarDailyCheckin');
+            if (!win || !taskbarIcon) return;
+            const winRect = win.getBoundingClientRect();
+            const iconRect = taskbarIcon.getBoundingClientRect();
+            win.style.transform = 'none';
+            win.style.left = winRect.left + 'px';
+            win.style.top = winRect.top + 'px';
+            const targetX = iconRect.left + iconRect.width / 2 - (winRect.left + winRect.width / 2);
+            const targetY = iconRect.top + iconRect.height / 2 - (winRect.top + winRect.height / 2);
+            win.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.05)`;
+            win.classList.add('minimized');
+            setTimeout(() => {
+                if (win.classList.contains('minimized')) { win.style.display = 'none'; win.style.transform = 'none'; }
+            }, 350);
+        }
+
+        function closeDailyCheckin() {
+            const win = document.getElementById('dailyCheckinWindow');
+            if (!win) return;
+            win.style.display = 'none';
+            win.classList.remove('minimized');
+            win.style.transform = 'none';
+            const taskbarIcon = document.getElementById('taskbarDailyCheckin');
+            if (taskbarIcon) taskbarIcon.style.display = 'none';
+        }
+
+        const DAILY_CHECKIN_STORAGE_KEY = 'daily_mood_checkin_v1';
+        const DAILY_CHECKIN_SUPABASE_URL = 'https://zqxrdakxhkdqukojbykk.supabase.co';
+        const DAILY_CHECKIN_SUPABASE_KEY = 'sb_publishable_U3yNBGXv9qMAqAXJF-QKrg_o9Wb5fW6';
+        let dailyCheckinSupabase = null;
+        let dailyCheckinRealtimeChannel = null;
+        let dailyCheckinCloudInitPromise = null;
+        let dailyCheckinSavedBubbleTimer = null;
+        let dailyCheckinObservedDate = localDateKey();
+
+        function localDateKey(date = new Date()) {
+            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        }
+        function updateDailyRating(kind, value) {
+            const level = Math.max(0, Math.min(5, Number(value) || 0));
+            const hiddenInput = document.getElementById(kind === 'energy' ? 'dailyEnergyLevel' : kind === 'stress' ? 'dailyStressLevel' : 'dailyLoveLevel');
+            if (hiddenInput) hiddenInput.value = String(level);
+            document.querySelectorAll(`.daily-heart[data-kind="${kind}"]`).forEach(button => {
+                const filled = Number(button.dataset.heart) <= level;
+                button.classList.toggle('selected', filled);
+                button.setAttribute('aria-pressed', filled ? 'true' : 'false');
+            });
+        }
+        function setDailyHeartRating(kind, value) {
+            const input = document.getElementById(kind === 'energy' ? 'dailyEnergyLevel' : kind === 'stress' ? 'dailyStressLevel' : 'dailyLoveLevel');
+            const current = input ? Number(input.value) || 0 : 0;
+            updateDailyRating(kind, current === Number(value) ? 0 : Number(value));
+        }
+        function toggleDailyMood(button) {
+            button.classList.toggle('selected');
+            button.setAttribute('aria-pressed', button.classList.contains('selected') ? 'true' : 'false');
+        }
+        function applyDailyCheckinEntry(entry) {
+            const today = localDateKey();
+            const validEntry = entry && entry.date === today ? entry : null;
+            document.querySelectorAll('.daily-mood-option').forEach(button => {
+                const selected = !!(validEntry && Array.isArray(validEntry.moods) && validEntry.moods.includes(button.dataset.mood));
+                button.classList.toggle('selected', selected);
+                button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+            });
+            const values = validEntry || {energy:0, stress:0, love:0, note:''};
+            [['energy','dailyEnergyLevel'],['stress','dailyStressLevel'],['love','dailyLoveLevel']].forEach(([kind,id]) => {
+                const savedValue = values[kind] == null ? 0 : Number(values[kind]);
+                updateDailyRating(kind, savedValue);
+            });
+            const noteField = document.getElementById('dailyCheckinNote');
+            if (noteField) noteField.value = validEntry && typeof validEntry.note === 'string' ? validEntry.note : '';
+        }
+        function resetDailyCheckinForNewDay() {
+            const today = localDateKey();
+            if (today === dailyCheckinObservedDate) return;
+            dailyCheckinObservedDate = today;
+            applyDailyCheckinEntry(null);
+            try {
+                const all = JSON.parse(localStorage.getItem(DAILY_CHECKIN_STORAGE_KEY) || '{}') || {};
+                localStorage.setItem(DAILY_CHECKIN_STORAGE_KEY, JSON.stringify({}));
+            } catch (_) {}
+            hideDailyCheckinSavedBubble();
+            // The cloud row is date-stamped. Yesterday's entry is ignored until today's entry is saved.
+        }
+        function loadDailyCheckin() {
+            resetDailyCheckinForNewDay();
+            let all = {};
+            try { all = JSON.parse(localStorage.getItem(DAILY_CHECKIN_STORAGE_KEY) || '{}') || {}; } catch (_) { all = {}; }
+            applyDailyCheckinEntry(all[localDateKey()] || null);
+            syncDailyCheckinFromCloud();
+        }
+        function showDailyCheckinSavedBubble(message = 'saved!', duration = 1800) {
+            const bubble = document.getElementById('dailyCheckinSavedBubble');
+            if (!bubble) return;
+            clearTimeout(dailyCheckinSavedBubbleTimer);
+            bubble.textContent = message;
+            bubble.classList.add('show');
+            dailyCheckinSavedBubbleTimer = setTimeout(() => bubble.classList.remove('show'), duration);
+        }
+        let dailyCheckinReactionTimer = null;
+        function showDailyCheckinBunnyReaction(moods) {
+            const reactions = {
+                excited: ['eee!! someone is having a good day! ♡', 'that excitement is contagious!! ✧'],
+                happy: ['someone is having a good day! ♡', 'eee, that makes bunny happy too!'],
+                loving: ['someone is feeling extra lovey today... ୨୧', 'sending all that love right back! ♡'],
+                sad: ['it is okay to have a hard day. ♡', 'bunny is staying right here with you.'],
+                lonely: ['sending you the biggest virtual hug! ♡', 'you are not alone, okay? ୨୧'],
+                upset: ['take a tiny breath with bunny... ♡', 'one little moment at a time, okay?'],
+                stressed: ['one thing at a time, okay? you got this ♡', 'bunny vote: a little rest is deserved.'],
+                worried: ['you do not have to solve everything right now. ♡', 'slow breaths, one step at a time.'],
+                scared: ['bunny is right here with you. ♡', 'you can take things slowly, okay?'],
+                tired: ['someone needs a little rest... ♡', 'rest is allowed, little bun.'],
+                exhausted: ['please be gentle with yourself today. ♡', 'someone deserves a cozy little rest.'],
+                sleepy: ['eepy time soon, maybe? ୨୧', 'bunny says: cozy blanket time.'],
+                hungry: ['tiny reminder to grab a snack! ♡', 'bunny hopes you get something yummy.'],
+                sick: ['please take it easy and get cozy. ♡', 'sending a soft little get-well hug.'],
+                bored: ['maybe a tiny fun thing would help? ✧', 'bunny vote: find one little joy today.'],
+                relaxed: ['look at you, taking a little breather. ♡', 'keep that cozy feeling close.'],
+                lazy: ['doing less is okay sometimes. ♡', 'slow day mode: activated.'],
+                normal: ['a little ordinary day is okay too. ♡', 'hope one tiny nice thing happens today.'],
+                unsure: ['you do not need to figure it all out yet. ♡', 'it is okay not to know just yet.']
+            };
+            const selected = Array.isArray(moods) ? moods : [];
+            const priority = ['exhausted','sick','scared','lonely','stressed','worried','sad','upset','tired','sleepy','hungry','loving','excited','happy','relaxed','lazy','bored','unsure','normal'];
+            const mood = priority.find(key => selected.includes(key));
+            const options = mood ? reactions[mood] : ['thanks for checking in, bae. ♡', 'bunny is proud of you for checking in.'];
+            const message = options[Math.floor(Math.random() * options.length)];
+            showDailyCheckinSavedBubble(message, 3200);
+        }
+        function hideDailyCheckinSavedBubble() {
+            const bubble = document.getElementById('dailyCheckinSavedBubble');
+            if (bubble) bubble.classList.remove('show');
+            clearTimeout(dailyCheckinSavedBubbleTimer);
+        }
+        async function initializeDailyCheckinCloud() {
+            if (dailyCheckinSupabase) return dailyCheckinSupabase;
+            if (dailyCheckinCloudInitPromise) return dailyCheckinCloudInitPromise;
+            dailyCheckinCloudInitPromise = (async () => {
+                if (!window.supabase || !window.supabase.createClient) throw new Error('Supabase library did not load.');
+                dailyCheckinSupabase = window.supabase.createClient(DAILY_CHECKIN_SUPABASE_URL, DAILY_CHECKIN_SUPABASE_KEY);
+                const { data, error } = await dailyCheckinSupabase
+                    .from('shared_daily_mood_checkin')
+                    .select('id, checkin_date, moods, energy, stress, love, note, updated_at')
+                    .eq('id', 1)
+                    .maybeSingle();
+                if (error) throw error;
+                if (data) {
+                    const cloudEntry = {
+                        date: String(data.checkin_date),
+                        moods: Array.isArray(data.moods) ? data.moods : [],
+                        energy: Number(data.energy) || 0,
+                        stress: Number(data.stress) || 0,
+                        love: Number(data.love) || 0,
+                        note: typeof data.note === 'string' ? data.note : '',
+                        updatedAt: data.updated_at
+                    };
+                    if (cloudEntry.date === localDateKey()) {
+                        const cache = {}; cache[cloudEntry.date] = cloudEntry;
+                        localStorage.setItem(DAILY_CHECKIN_STORAGE_KEY, JSON.stringify(cache));
+                    }
+                    applyDailyCheckinEntry(cloudEntry);
+                } else {
+                    applyDailyCheckinEntry(null);
+                }
+                if (!dailyCheckinRealtimeChannel) {
+                    dailyCheckinRealtimeChannel = dailyCheckinSupabase.channel('shared-daily-mood-checkin-live')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'shared_daily_mood_checkin' }, payload => {
+                            const row = payload.new && payload.new.id === 1 ? payload.new : null;
+                            if (!row) { applyDailyCheckinEntry(null); return; }
+                            const cloudEntry = {
+                                date: String(row.checkin_date), moods: Array.isArray(row.moods) ? row.moods : [],
+                                energy: Number(row.energy) || 0, stress: Number(row.stress) || 0,
+                                love: Number(row.love) || 0, note: typeof row.note === 'string' ? row.note : '', updatedAt: row.updated_at
+                            };
+                            if (cloudEntry.date === localDateKey()) {
+                                const cache = {}; cache[cloudEntry.date] = cloudEntry;
+                                try { localStorage.setItem(DAILY_CHECKIN_STORAGE_KEY, JSON.stringify(cache)); } catch (_) {}
+                            }
+                            applyDailyCheckinEntry(cloudEntry);
+                        })
+                        .subscribe();
+                }
+                return dailyCheckinSupabase;
+            })();
+            try { return await dailyCheckinCloudInitPromise; }
+            catch (error) {
+                dailyCheckinCloudInitPromise = null;
+                console.error('Daily Mood Check-in cloud load error:', error.message || error);
+                throw error;
+            }
+        }
+        async function syncDailyCheckinFromCloud() {
+            try { await initializeDailyCheckinCloud(); }
+            catch (_) { /* Keep the local copy visible if the cloud is unavailable. */ }
+        }
+        async function saveDailyCheckin() {
+            resetDailyCheckinForNewDay();
+            const entry = {
+                date: localDateKey(),
+                moods: Array.from(document.querySelectorAll('.daily-mood-option.selected')).map(button => button.dataset.mood),
+                energy: Number(document.getElementById('dailyEnergyLevel').value),
+                stress: Number(document.getElementById('dailyStressLevel').value),
+                love: Number(document.getElementById('dailyLoveLevel').value),
+                note: (document.getElementById('dailyCheckinNote')?.value || '').trim(),
+                updatedAt: new Date().toISOString()
+            };
+            const saveButton = document.querySelector('.daily-checkin-save');
+            hideDailyCheckinSavedBubble();
+            if (saveButton) { saveButton.classList.remove('save-error', 'saved'); saveButton.disabled = true; }
+            try {
+                // Keep a local cache for quick display, while Supabase is the shared source of truth.
+                localStorage.setItem(DAILY_CHECKIN_STORAGE_KEY, JSON.stringify({ [entry.date]: entry }));
+                const client = await initializeDailyCheckinCloud();
+                const { error } = await client.from('shared_daily_mood_checkin').upsert({
+                    id: 1, checkin_date: entry.date, moods: entry.moods,
+                    energy: entry.energy, stress: entry.stress, love: entry.love, note: entry.note,
+                    updated_at: entry.updatedAt
+                }, { onConflict: 'id' });
+                if (error) throw error;
+                applyDailyCheckinEntry(entry);
+                if (saveButton) { saveButton.classList.add('saved'); setTimeout(() => saveButton.classList.remove('saved'), 900); }
+                showDailyCheckinSavedBubble('saved!', 1750);
+                clearTimeout(dailyCheckinReactionTimer);
+                dailyCheckinReactionTimer = setTimeout(() => showDailyCheckinBunnyReaction(entry.moods), 1850);
+            } catch (error) {
+                console.error('Daily Mood Check-in save error:', error.message || error);
+                if (saveButton) { saveButton.classList.add('save-error'); setTimeout(() => saveButton.classList.remove('save-error'), 1200); }
+                alert('Your check-in could not sync to Supabase. Please check the setup and try saving again.');
+            } finally {
+                if (saveButton) saveButton.disabled = false;
+            }
+        }
+        // Reset the visible check-in when the local calendar day changes, even if the page stays open.
+        setInterval(resetDailyCheckinForNewDay, 15000);
+
+        // Keep the new mood window draggable like the other desktop apps.
+        (() => {
+            const dailyWin = document.getElementById('dailyCheckinWindow');
+            const dailyTitle = document.getElementById('dailyCheckinTitlebar');
+            if (!dailyWin || !dailyTitle) return;
+            let dragging = false, startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+            dailyTitle.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.window-controls')) return;
+                bringWindowToFront(dailyWin);
+                dragging = true; startX = e.clientX; startY = e.clientY;
+                const rect = dailyWin.getBoundingClientRect();
+                dailyWin.style.transform = 'none';
+                dailyWin.style.left = rect.left + 'px'; dailyWin.style.top = rect.top + 'px';
+                initialLeft = rect.left; initialTop = rect.top;
+                document.addEventListener('mousemove', moveDailyWindow);
+                document.addEventListener('mouseup', stopDailyWindow);
+            });
+            function moveDailyWindow(e) {
+                if (!dragging) return;
+                dailyWin.style.left = (initialLeft + e.clientX - startX) + 'px';
+                dailyWin.style.top = (initialTop + e.clientY - startY) + 'px';
+            }
+            function stopDailyWindow() {
+                dragging = false;
+                document.removeEventListener('mousemove', moveDailyWindow);
+                document.removeEventListener('mouseup', stopDailyWindow);
+            }
+        })();
 
         function toggleMusicFromTaskbar() {
             const win = document.getElementById('musicWindow');
@@ -5891,18 +6689,24 @@ html body .deep-thoughts-release-btn:disabled {
         }
 
         const rawPlaylist = [
-            { title: "𓆩✧𓆪 no batidao", artist: "ZXKAI and slxughter", url: "https://www.dropbox.com/scl/fi/c88zzhwf4smleye9lkrl0/MAFIA-NO-BATID-O-SLOWED.m4a?rlkey=96ca78mykx045v4cmrgh7gsak&st=5k77oj17&dl=1" , cover: "https://i.postimg.cc/XYSSDWBm/24699498006410558.jpg" },
-            { title: "❁ 3 Strikes ❁", artist: "HSGT", url: "https://www.dropbox.com/scl/fi/3e4b20rvxgqrk5u5445nq/3-Strikes.mp3?rlkey=vq3wmafoa4mxdpmuh8cpal4ai&st=gq06sca4&dl=1" , cover: "https://i.postimg.cc/T2td7XpM/5452159068005932094.jpg" },
-            { title: "ꪆ школьник ` ୧", artist: "Poshlaya Molly", url: "https://www.dropbox.com/scl/fi/nopujxqr3m19ci0iagdf3/_-_-_-_.mp3?rlkey=gckngcc1d2q69sxppz2ik1gkp&st=vw9bbjbs&dl=1" , cover: "https://i.postimg.cc/dV2MbfGB/Anime-90s-Aesthetics.jpg" },
-            { title: "𓆩 loucura letal 𓆪", artist: "NAKAMA and Nxxkz", url: "https://www.dropbox.com/scl/fi/nirfa6gwrpb1yuw25x409/191195352_456250121_73573b59-7bd.mp3?rlkey=s0eppzkyoehkxf3k5il0r8124&st=p80m9c22&dl=1" , cover: "https://i.postimg.cc/3rt8SHdK/5361926121559105492.jpg" },
-            { title: "꒰ ты в моих мыслях навсегда . .", artist: "Урал гайсин and снялцепи", url: "https://www.dropbox.com/scl/fi/shnpmqry4sch5uq28pdpa/tmpa66m8w67.mp3?rlkey=0ge53212p7cip4ieulv7j7ra7&st=m54pl7n9&dl=1" , cover: "https://i.postimg.cc/P5ssFHv0/39688040462141978.jpg" },
-            { title: "Урал гайсин and снялцепи", artist: "Eternxlkz", url: "https://www.dropbox.com/scl/fi/11on5xifqwkvu1rb3duma/tmpy_vozca2.mp3?rlkey=6nes08j1zlonvmn8p4ah80e4o&st=ncoj1t0y&dl=1" , cover: "https://i.postimg.cc/DfxvjK8h/5291752459090991205.jpg" },
-            { title: "꒰ антигейша `", artist: "Nu Virgos", url: "https://www.dropbox.com/scl/fi/8jz41r7usedp2sbgh3u2a/tmpmfj9rpqb.mp3?rlkey=f20rixvwmcrxjoip29ugjb5bl&st=9sys4d0g&dl=1" , cover: "https://i.postimg.cc/JzVVd8H6/download-(5).jpg" },
-            { title: "꒰ молчи 𖥔 ݁˖", artist: "Kis-Kis", url: "https://www.dropbox.com/scl/fi/br7jzes6znzxzbmsbqm9e/.mp3?rlkey=sv455vy7kao0mqsmfpzrr3x8p&st=9jtg4ugj&dl=1" , cover: "https://i.postimg.cc/pLbb1v50/1119989001056808220.jpg" },
-            { title: ". . voce na mira ` ✧", artist: "DJ VGK1 and Hwungii", url: "https://www.dropbox.com/scl/fi/e2qz7o7xqvspcvxmy1te2/VOCE-NA-MIRA-SLOWED.mp3?rlkey=gm8s8lfrm07bmt67bkync0m5z&st=86w24xxp&dl=1" , cover: "https://i.postimg.cc/y6L1Qzk7/5346097603705247839.jpg" },
-            { title: ". . ᥲɸᴛᥱρᥰᥰᴛᥙ `", artist: "Uniqe", url: "https://www.dropbox.com/scl/fi/17ywg281hd95cp4dqwa5r/uniqe-nkeeei-ARTEM-SHILOVETS-xxxmanera.mp3?rlkey=wz6d1x918tdm6g1oy02q3nmhf&st=ae8yxrq5&dl=1" , cover: "https://i.postimg.cc/6pJJ1K4b/482870391308837147.jpg" },
-            { title: "𐙚 ᥰρ᧐κ᧘я ` . .", artist: "Poshlaya Molly", url: "https://www.dropbox.com/scl/fi/a92kq0ya8e66pbymzlhr3/tmp38jksryt.mp3?rlkey=6cezdsvhreplc7smn81ozio1v&st=7j0sfli4&dl=1" , cover: "https://i.postimg.cc/MZ96P8X4/download-(7)-Copy.jpg" },
-            { title: "꒰ 冬꒱ δ2δ . .", artist: "Charli xcx", url: "https://www.dropbox.com/scl/fi/ijrggijjasapqubykn06u/4_5998988398092626343.mp3?rlkey=ojot2jfmjvign296rmuem2aru&st=wdxilmgq&dl=1" , cover: "https://i.postimg.cc/7Z88Q4JQ/33706697207683253.jpg" }
+            { title: "Oh My Little Baby Boy 𖹭", artist: "Babe", url: "https://www.dropbox.com/scl/fi/9bodmntwbhxwj8uwvqhvr/Babe-Oh-My-Little-Baby-Boy-SPEED-UP.mp3?rlkey=irm5ljhbghsl3s71gie9d712v&st=pfnev91z&dl=1", cover: "https://i.postimg.cc/Qt4hz1b3/image.jpg", volume: 0.9 },
+            { title: "I Really Like You ᰔ", artist: "Carly Rae Jepsen", url: "https://www.dropbox.com/scl/fi/6cj9plawhj48kxxwdo84b/Nightcore-I-Really-Like-You.mp3?rlkey=ibea8c00cbpl3pcvisphgegws&st=m9gyssa8&dl=1", cover: "https://i.postimg.cc/1ttGvSHK/download-(1).jpg", volume: 0.9 },
+            { title: "Kiss Me Thru the Phone ꨄ︎", artist: "Soulja Boy ft. Sammie", url: "https://www.dropbox.com/scl/fi/hm6debmcrbyz5a63fta1t/Nightcore-Kiss-me-thru-the-phone.mp3?rlkey=iy65hlf4ii6xcod7032qxf2v1&st=ywo5bttd&dl=1", cover: "https://i.postimg.cc/FzKPzJ3p/download-(2).jpg", volume: 0.9 },
+            { title: "glitter ✧", artist: "lexycat", url: "https://www.dropbox.com/scl/fi/1obqi8wtjm4oa246sesw9/glitter-lexycat-speed-up.mp3?rlkey=k2mcm8jof35vp1dxz49ioruwz&st=pqwrfdlr&dl=1", cover: "https://i.postimg.cc/mrV33kQP/download-(4).jpg", volume: 1 },
+            { title: "over tonight 𐭩", artist: "RomancePlanet", url: "https://www.dropbox.com/scl/fi/fb333wdzt3vzol4omb4y3/ROMANCEPLANET-OVER-TONIGHT-OFFICIAL-AUDIO.mp3?rlkey=58j3qmom9fdjv1nxvzkbcbd1r&st=hkep6uoi&dl=1", cover: "https://i.postimg.cc/rsHh7F3d/download-(17).jpg", volume: 0.9 },
+            { title: "Love Potions ♡", artist: "6arelyhuman", url: "https://www.dropbox.com/scl/fi/eo28vrbzxu02m8jvfxqzv/Love-Potions-6arelyhuman-Remix.mp3?rlkey=jnk1vbhftj51kh7m90x6k9a6h&st=tdm1juyk&dl=1", cover: "https://i.postimg.cc/rsDM2snp/download-(8).jpg", volume: 0.9 },
+            { title: "twirl 𐙚", artist: "noturtype", url: "https://www.dropbox.com/scl/fi/59310ojmi856683rgx6vz/twirl.mp3?rlkey=zctcpb09d7vzo1j27ikew2q0s&st=oz6jyitu&dl=1", cover: "https://i.postimg.cc/9MFc1JyL/download-(16).jpg", volume: 0.9 },
+            { title: "wutiwant . . ✧", artist: "saraunh0ly", url: "https://www.dropbox.com/scl/fi/woykzrrz2goiyiexmipnq/saraunh0ly-wutiwant-Nightcore.mp3?rlkey=q9lk74e7msele04txfdtg1ayu&st=96k1kacx&dl=1", cover: "https://i.postimg.cc/NFQYLbj1/image.jpg", volume: 0.9 },
+            { title: "Take Me to Heaven 𓆩♡𓆪", artist: "CARA", url: "https://www.dropbox.com/scl/fi/av000ukafa6laimvgp6x5/Take-me-to-heaven-nightcore-sped-up.mp3?rlkey=yu50y0uecfgfnk7fruhd49hmh&st=craoa1iq&dl=1", cover: "https://i.postimg.cc/pr0b0FDV/download-(18).jpg", volume: 0.9 },
+            { title: "Little Kandi Raver ♡", artist: "S3RL feat. Sara", url: "https://www.dropbox.com/scl/fi/dvayjtvbyi5yse6fckf08/Little-Kandi-Raver-2012-S3RL-feat-Sara.mp3?rlkey=fbfxtp64wimdobxabetv5gu3h&st=m3kxkva7&dl=1", cover: "https://i.postimg.cc/90CQCp7Z/artworks-fvii2Cggx2p4Fpf-H-l-Dl-BNg-t500x500.jpg", volume: 0.9 },
+            { title: "R4V3 B0Y 𐙚", artist: "S3RL feat. Krystal", url: "https://www.dropbox.com/scl/fi/ndymo55dzil05mznpr89a/R4V3-B0Y-S3RL-feat-Krystal.mp3?rlkey=zixy43f6c1vbgpzkqbtey7410&st=67682b0g&dl=1", cover: "https://i.postimg.cc/L5yKy1z6/breakcore.jpg", volume: 0.9 },
+            { title: "Dam Dadi Do ✧", artist: "Nightcore", url: "https://www.dropbox.com/scl/fi/odqvt54jndqmhcoty17dy/Nightcore-Dam-Dadi-Do.mp3?rlkey=1xlirvfqp8ruhwq5b1jgyrtpl&st=albenwfl&dl=1", cover: "https://i.postimg.cc/j28087zx/Nightcore.jpg", volume: 0.9 },
+            { title: "Exitin' ✧", artist: "Cece Natalie", url: "https://www.dropbox.com/scl/fi/qgjtj7s5z7qj3y5rukkhp/Exitin-Cece-Natalie-sped-up-nightcore-reverb.mp3?rlkey=zquaol3mf1vvclvjm8l9kw7hw&st=eum8cgxk&dl=1", cover: "https://i.postimg.cc/pLbb1v50/1119989001056808220.jpg", volume: 0.9 },
+            { title: "Vacation Bible School ♡", artist: "Ayesha Erotica", url: "https://www.dropbox.com/scl/fi/cvdljukp38ohf44k5r0a6/Vacation-Bible-School.mp3?rlkey=gyv8c24fxrwn3fuhbbshbxeuy&st=gxmmmb6f&dl=1", cover: "https://i.postimg.cc/PfK9HdYM/Love-love-love.jpg", volume: 0.9 },
+            { title: "Stereo Love ✧", artist: "Edward Maya & Vika Jigulina", url: "https://www.dropbox.com/scl/fi/x75q57xasfa7hrlk5vkc7/Nightcore-Stereo-Love.mp3?rlkey=sj3qzv9rytbhn7d00rznxsajz&st=6kmiit28&dl=1", cover: "https://i.postimg.cc/NFKBvFJ2/download-(7).jpg", volume: 0.9 },
+            { title: "My Heart Beats Like a Drum ᢉ", artist: "A Touch of Class", url: "https://www.dropbox.com/scl/fi/2yi5yrqaq6dh2s4ux2k90/Nightcore-My-Heart-Beats-Like-A-Drum.mp3?rlkey=uy9coi9jzgfjf8szjb16csdm6&st=2k6wc68q&dl=1", cover: "https://i.postimg.cc/g0yPqvtk/shy-cat.jpg", volume: 0.9 },
+            { title: "Castle in the Sky ⋆", artist: "DJ Satomi", url: "https://www.dropbox.com/scl/fi/iyuzzy14e27gjtnmpvy54/Nightcore-Castle-In-The-Sky.mp3?rlkey=pakysdayqcr3ricz8551gz318&st=9b90m6pd&dl=1", cover: "https://i.postimg.cc/br48yPW3/607634174775211918.avif", volume: 0.9 },
+            { title: "Häschenparty ୨୧", artist: "Schnuffel", url: "https://www.dropbox.com/scl/fi/45b64hy5bvkefzduc5g2a/Jamba-Schnuffel-Full-Track-H-schenparty-DE.mp3?rlkey=xfcu45domexsy78kygwa90f3q&st=3nhytl1y&dl=1", cover: "https://i.postimg.cc/SRnkbRTs/awhhhh.jpg", volume: 0.9 }
         ];
 
         function shuffleArray(array) {
@@ -5931,6 +6735,8 @@ html body .deep-thoughts-release-btn:disabled {
 
         let currentTrackIdx = 0;
         let isMusicPlaying = false;
+        let musicPlaybackRequested = false;
+        let playbackRequestToken = 0;
         let isLooping = false;
 
         // Reliable music loading: keep the active player plus one nearby
@@ -5939,7 +6745,7 @@ html body .deep-thoughts-release-btn:disabled {
         const audioRetryCount = new Map();
         let audioElement = null;
         let activeTrackUrl = '';
-        const MAX_AUDIO_RETRIES = 2;
+        const MAX_AUDIO_RETRIES = 7;
 
         function createAudioForTrack(track) {
             if (!track || !track.url) return null;
@@ -5975,58 +6781,61 @@ html body .deep-thoughts-release-btn:disabled {
             });
 
             element.addEventListener('ended', () => {
-                if (element !== audioElement) return;
-                if (isLooping) {
-                    element.currentTime = 0;
-                    element.play().then(() => {
-                        isMusicPlaying = true;
-                        updatePlayButtonUI();
-                    }).catch(() => {
-                        isMusicPlaying = false;
-                        updatePlayButtonUI();
-                    });
-                } else {
-                    nextTrack();
-                }
+                if (element !== audioElement || !musicPlaybackRequested) return;
+                // Continue the playlist only when the user has playback active.
+                nextTrack();
             });
 
+            let recoveryPending = false;
             const recover = () => {
-                if (element !== audioElement) return;
+                if (element !== audioElement || !musicPlaybackRequested || recoveryPending) return;
                 const url = activeTrackUrl || element.src;
                 const used = audioRetryCount.get(url) || 0;
-                if (used < MAX_AUDIO_RETRIES) {
-                    audioRetryCount.set(url, used + 1);
-                    setTimeout(() => {
-                        if (element !== audioElement || activeTrackUrl !== url) return;
-                        const savedTime = Number.isFinite(element.currentTime) ? element.currentTime : 0;
-                        element.pause();
-                        element.src = url;
-                        element.load();
-                        const resume = () => {
-                            element.currentTime = Math.min(savedTime, Math.max(0, (element.duration || savedTime) - 0.05));
-                            if (isMusicPlaying) {
-                                element.play().then(() => {
-                                    updatePlayButtonUI();
-                                }).catch(() => {
-                                    isMusicPlaying = false;
-                                    document.getElementById('vinylRecord')?.classList.remove('spinning');
-                                    updatePlayButtonUI();
-                                });
-                            }
-                            element.removeEventListener('canplay', resume);
-                        };
-                        element.addEventListener('canplay', resume, { once: true });
-                    }, 300);
-                } else {
+                if (used >= MAX_AUDIO_RETRIES) {
                     isMusicPlaying = false;
+                    musicPlaybackRequested = false;
                     document.getElementById('vinylRecord')?.classList.remove('spinning');
                     updatePlayButtonUI();
+                    return;
                 }
+                recoveryPending = true;
+                audioRetryCount.set(url, used + 1);
+                const requestToken = playbackRequestToken;
+                const savedTime = Number.isFinite(element.currentTime) ? element.currentTime : 0;
+                setTimeout(() => {
+                    if (element !== audioElement || activeTrackUrl !== url || requestToken !== playbackRequestToken || !musicPlaybackRequested) {
+                        recoveryPending = false;
+                        return;
+                    }
+                    element.pause();
+                    element.src = url;
+                    element.load();
+                    const resume = () => {
+                        element.removeEventListener('canplay', resume);
+                        recoveryPending = false;
+                        if (element !== audioElement || activeTrackUrl !== url || requestToken !== playbackRequestToken || !musicPlaybackRequested) return;
+                        try { element.currentTime = Math.min(savedTime, Math.max(0, (element.duration || savedTime) - 0.1)); } catch (_) {}
+                        element.play().then(() => {
+                            if (element === audioElement && requestToken === playbackRequestToken) {
+                                isMusicPlaying = true;
+                                updatePlayButtonUI();
+                                document.getElementById('vinylRecord')?.classList.add('spinning');
+                            }
+                        }).catch(() => {
+                            recoveryPending = false;
+                            // A subsequent media error/stall may make another bounded attempt.
+                        });
+                    };
+                    element.addEventListener('canplay', resume, { once: true });
+                    // Avoid waiting forever if the host doesn't emit canplay.
+                    setTimeout(() => { if (recoveryPending && element === audioElement && requestToken === playbackRequestToken) { recoveryPending = false; recover(); } }, 5000);
+                }, 350);
             };
-
             element.addEventListener('error', recover);
             element.addEventListener('stalled', recover);
             element.addEventListener('abort', recover);
+            // 'waiting' is a normal buffering state, not a playback failure.
+            // Reloading on every waiting event can interrupt otherwise healthy songs.
         }
 
         function warmAudioAround(index) {
@@ -6052,6 +6861,7 @@ html body .deep-thoughts-release-btn:disabled {
             activeTrackUrl = track.url;
             audioRetryCount.set(activeTrackUrl, 0);
             audioElement.muted = isAllSoundsMuted;
+            audioElement.volume = typeof track.volume === 'number' ? track.volume : 0.9;
 
             // Treat every track selection like a regular music player:
             // selecting a track starts it from the beginning, even if its
@@ -6091,27 +6901,74 @@ html body .deep-thoughts-release-btn:disabled {
 
         function playActiveAudio() {
             if (!audioElement) loadTrack(currentTrackIdx);
-            if (!audioElement) return;
+            const targetAudio = audioElement;
+            const targetUrl = activeTrackUrl;
+            if (!targetAudio) return Promise.resolve();
 
-            audioElement.muted = isAllSoundsMuted;
-            return audioElement.play().then(() => {
+            const requestToken = ++playbackRequestToken;
+            musicPlaybackRequested = true;
+            targetAudio.muted = isAllSoundsMuted;
+            targetAudio.volume = typeof playlist[currentTrackIdx]?.volume === 'number'
+                ? playlist[currentTrackIdx].volume
+                : 0.9;
+
+            const markPlaying = () => {
+                // A rapid skip or pause may have made this request obsolete.
+                if (requestToken !== playbackRequestToken || targetAudio !== audioElement) return;
                 isMusicPlaying = true;
+                musicPlaybackRequested = true;
                 document.getElementById('vinylRecord')?.classList.add('spinning');
                 updatePlayButtonUI();
-            }).catch((error) => {
-                console.log('Playback failed, retrying:', error);
-                const url = activeTrackUrl || audioElement.src;
-                const used = audioRetryCount.get(url) || 0;
-                if (used < MAX_AUDIO_RETRIES) {
-                    audioRetryCount.set(url, used + 1);
-                    audioElement.load();
-                    return audioElement.play().then(() => {
-                        isMusicPlaying = true;
-                        document.getElementById('vinylRecord')?.classList.add('spinning');
-                        updatePlayButtonUI();
+            };
+
+            return targetAudio.play().then(markPlaying).catch((error) => {
+                if (requestToken !== playbackRequestToken || targetAudio !== audioElement) return;
+                console.log('Playback attempt failed:', error);
+
+                // A media element can still be loading when several tracks are
+                // skipped quickly. Retry once when the selected file is playable.
+                const used = audioRetryCount.get(targetUrl) || 0;
+                if (used < 1 && error?.name !== 'NotAllowedError') {
+                    audioRetryCount.set(targetUrl, used + 1);
+                    return new Promise((resolve, reject) => {
+                        let settled = false;
+                        const cleanup = () => {
+                            targetAudio.removeEventListener('canplay', onCanPlay);
+                            targetAudio.removeEventListener('error', onError);
+                        };
+                        const finish = (callback, value) => {
+                            if (settled) return;
+                            settled = true;
+                            cleanup();
+                            callback(value);
+                        };
+                        const onError = () => finish(reject, new Error('The selected song could not be loaded.'));
+                        const onCanPlay = () => {
+                            if (requestToken !== playbackRequestToken || targetAudio !== audioElement) {
+                                finish(resolve);
+                                return;
+                            }
+                            targetAudio.play().then(() => {
+                                markPlaying();
+                                finish(resolve);
+                            }).catch((retryError) => finish(reject, retryError));
+                        };
+                        targetAudio.addEventListener('canplay', onCanPlay, { once: true });
+                        targetAudio.addEventListener('error', onError, { once: true });
+                        targetAudio.load();
+                    }).catch((retryError) => {
+                        if (requestToken === playbackRequestToken && targetAudio === audioElement) {
+                            isMusicPlaying = false;
+                            musicPlaybackRequested = false;
+                            document.getElementById('vinylRecord')?.classList.remove('spinning');
+                            updatePlayButtonUI();
+                        }
+                        throw retryError;
                     });
                 }
+
                 isMusicPlaying = false;
+                musicPlaybackRequested = false;
                 document.getElementById('vinylRecord')?.classList.remove('spinning');
                 updatePlayButtonUI();
                 throw error;
@@ -6122,8 +6979,12 @@ html body .deep-thoughts-release-btn:disabled {
             const vinyl = document.getElementById('vinylRecord');
             if (!audioElement || !audioElement.src) loadTrack(currentTrackIdx);
 
-            if (isMusicPlaying) {
-                audioElement.pause();
+            if (isMusicPlaying || musicPlaybackRequested) {
+                // Invalidate any pending play promise so it cannot restart audio
+                // after the user has explicitly paused the player.
+                playbackRequestToken++;
+                musicPlaybackRequested = false;
+                if (audioElement) audioElement.pause();
                 isMusicPlaying = false;
                 vinyl?.classList.remove('spinning');
                 updatePlayButtonUI();
@@ -6147,11 +7008,14 @@ html body .deep-thoughts-release-btn:disabled {
         }
 
         function switchTrack(index) {
-            const wasPlaying = isMusicPlaying;
+            const shouldKeepPlaying = musicPlaybackRequested || isMusicPlaying || (audioElement && !audioElement.paused);
+            playbackRequestToken++;
             if (audioElement) audioElement.pause();
             isMusicPlaying = false;
+            musicPlaybackRequested = shouldKeepPlaying;
             loadTrack(index);
-            if (wasPlaying) playActiveAudio().catch(() => {});
+            if (shouldKeepPlaying) playActiveAudio().catch(() => {});
+            else updatePlayButtonUI();
         }
 
         function prevTrack() {
@@ -6521,26 +7385,23 @@ html body .deep-thoughts-release-btn:disabled {
         let stickyPendingDrag = null;
         let stickyZ = 10;
 
-        const stickySeedNotes = [
-            { id: 'seed-1', text: 'just a tiny reminder that\nsomewhere in the world,\ni am thinking about you.', label: 'from me', x: 34, y: 58, r: -4, tone: 'pink', pin: '🐰' },
-            { id: 'seed-2', text: 'drink some water, silly.\nyou deserve to be taken\ncare of too.', label: 'from me', x: 197, y: 33, r: 3, tone: 'cream', pin: '🥕' },
-            { id: 'seed-3', text: 'leave me anything here.\na thought, a story, or\nsomething completely random.', label: 'from me', x: 365, y: 88, r: -2, tone: 'lilac', pin: '🍰' }
-        ];
+        // Start with a completely empty corkboard; no starter notes.
+        const stickySeedNotes = [];
 
         function loadStickyNotes() {
             try {
                 const stored = JSON.parse(localStorage.getItem(stickyStorageKey) || 'null');
-                if (Array.isArray(stored) && stored.length) {
+                if (Array.isArray(stored)) {
                     stickyNotes = stored.filter(n => String(n?.text || '').trim().length > 0);
                     if (stickyNotes.length !== stored.length) {
                         saveStickyNotes();
                     }
                 } else {
-                    stickyNotes = stickySeedNotes.map(n => ({...n}));
+                    stickyNotes = [];
                     saveStickyNotes();
                 }
             } catch (e) {
-                stickyNotes = stickySeedNotes.map(n => ({...n}));
+                stickyNotes = [];
             }
             renderStickyNotes();
         }
@@ -6564,8 +7425,41 @@ html body .deep-thoughts-release-btn:disabled {
             return '';
         }
 
+        function clampStickyNotePositions() {
+            if (!stickyBoard) return false;
+            const boardWidth = stickyBoard.clientWidth;
+            const boardHeight = stickyBoard.clientHeight;
+            if (!boardWidth || !boardHeight) return false;
+            const noteWidth = 142;
+            const noteHeight = 124;
+            // Keep the whole paper inside the corkboard; leave a little room above
+            // the paper so its decorative pin remains visible.
+            const minLeft = 0;
+            const maxLeft = Math.max(minLeft, boardWidth - noteWidth);
+            const minTop = 10;
+            const maxTop = Math.max(minTop, boardHeight - noteHeight);
+            let changed = false;
+            stickyNotes.forEach(note => {
+                const rawX = Number(note.x);
+                const rawY = Number(note.y);
+                const left = Number.isFinite(rawX) ? rawX / 100 * boardWidth : minLeft;
+                const top = Number.isFinite(rawY) ? rawY / 100 * boardHeight : minTop;
+                const safeLeft = Math.max(minLeft, Math.min(maxLeft, left));
+                const safeTop = Math.max(minTop, Math.min(maxTop, top));
+                const x = safeLeft / boardWidth * 100;
+                const y = safeTop / boardHeight * 100;
+                if (!Number.isFinite(rawX) || !Number.isFinite(rawY) || Math.abs(rawX - x) > 0.01 || Math.abs(rawY - y) > 0.01) {
+                    note.x = x;
+                    note.y = y;
+                    changed = true;
+                }
+            });
+            return changed;
+        }
+
         function renderStickyNotes() {
             if (!stickyBoard) return;
+            clampStickyNotePositions();
             stickyBoard.querySelectorAll('.sticky-note').forEach(el => el.remove());
             stickyNotes.forEach(note => createStickyNoteElement(note));
         }
@@ -6869,10 +7763,12 @@ html body .deep-thoughts-release-btn:disabled {
             })();
             const localStickers = readStickerPositions();
 
-            if (data && Array.isArray(data.notes) && data.notes.length) {
+            if (data && Array.isArray(data.notes)) {
                 stickyNotes = data.notes;
+                const positionsWereClamped = clampStickyNotePositions();
                 localStorage.setItem(stickyStorageKey, JSON.stringify(stickyNotes));
                 renderStickyNotes();
+                if (positionsWereClamped) scheduleStickyCloudSave();
             } else {
                 stickyNotes = localNotes;
                 renderStickyNotes();
@@ -6891,8 +7787,10 @@ html body .deep-thoughts-release-btn:disabled {
                     if (!payload || !Array.isArray(payload.notes)) return;
                     stickyCloudApplying = true;
                     stickyNotes = payload.notes;
+                    const positionsWereClamped = clampStickyNotePositions();
                     localStorage.setItem(stickyStorageKey, JSON.stringify(stickyNotes));
                     renderStickyNotes();
+                    if (positionsWereClamped) scheduleStickyCloudSave();
                     if (payload.stickers && typeof payload.stickers === 'object') {
                         localStorage.setItem(stickerStorageKey, JSON.stringify(payload.stickers));
                         applyStickerPositions(payload.stickers);
@@ -6902,7 +7800,7 @@ html body .deep-thoughts-release-btn:disabled {
                 .subscribe();
 
             // If this is the first visit to the shared board, seed it from the existing local board.
-            if (!data || !Array.isArray(data.notes) || !data.notes.length) {
+            if (!data || !Array.isArray(data.notes)) {
                 await saveStickyBoardToCloud();
             }
         }
@@ -7706,6 +8604,664 @@ html body .deep-thoughts-release-btn:disabled {
     });
 })();
 </script>
+
+
+<style id="daily-checkin-shorter-scrollbar-final">
+/* Shorten the scrollbar track itself so it clears the rounded window frame at both ends. */
+.daily-checkin-body { scrollbar-width: thin; scrollbar-color: #efabc0 transparent; }
+.daily-checkin-body::-webkit-scrollbar { width: 4px; }
+.daily-checkin-body::-webkit-scrollbar-track { background: transparent; border-radius: 999px; margin-top: 18px; margin-bottom: 42px; margin-right: 1px; }
+.daily-checkin-body::-webkit-scrollbar-thumb { background: #efabc0; border: 1px solid #fff0f5; border-radius: 999px; }
+.daily-checkin-body::-webkit-scrollbar-thumb:hover { background: #df8eae; }
+@media (max-width: 520px) {
+  .daily-checkin-body::-webkit-scrollbar-track { margin-top: 15px; margin-bottom: 36px; }
+}
+</style>
+
+<style id="requested-taskbar-and-widget-fixes">
+/* Theme 1: more visible drifting mist; each layer has a different irregular cloud formation. */
+.desktop-container.theme-lavender .lavender-cloud {
+  width: 620px !important; height: 270px !important; border-radius: 0 !important;
+  background:
+    radial-gradient(ellipse 24% 22% at 13% 56%,rgba(255,255,255,.48),transparent 100%),
+    radial-gradient(ellipse 35% 30% at 32% 37%,rgba(255,255,255,.55),transparent 100%),
+    radial-gradient(ellipse 29% 25% at 53% 59%,rgba(249,235,255,.48),transparent 100%),
+    radial-gradient(ellipse 34% 23% at 75% 39%,rgba(255,255,255,.43),transparent 100%),
+    radial-gradient(ellipse 48% 23% at 47% 72%,rgba(255,255,255,.40),transparent 100%),
+    radial-gradient(ellipse 31% 19% at 91% 63%,rgba(235,226,255,.38),transparent 100%) !important;
+  filter: blur(22px) !important; box-shadow:none !important; opacity:.98 !important;
+}
+.desktop-container.theme-lavender .lavender-cloud.one { transform:scale(1.05,1.12) rotate(-7deg) !important; }
+.desktop-container.theme-lavender .lavender-cloud.two {
+  background:radial-gradient(ellipse 38% 24% at 17% 50%,rgba(255,255,255,.48),transparent 100%),radial-gradient(ellipse 26% 34% at 42% 38%,rgba(249,237,255,.58),transparent 100%),radial-gradient(ellipse 34% 24% at 65% 62%,rgba(255,255,255,.45),transparent 100%),radial-gradient(ellipse 43% 22% at 83% 39%,rgba(238,229,255,.43),transparent 100%),radial-gradient(ellipse 53% 25% at 49% 73%,rgba(255,255,255,.38),transparent 100%) !important;
+  transform:scale(.92,1.2) rotate(8deg) !important;
+}
+.desktop-container.theme-lavender .lavender-cloud.three {
+  background:radial-gradient(ellipse 30% 26% at 12% 43%,rgba(239,231,255,.48),transparent 100%),radial-gradient(ellipse 39% 23% at 34% 64%,rgba(255,255,255,.52),transparent 100%),radial-gradient(ellipse 25% 35% at 59% 38%,rgba(255,255,255,.48),transparent 100%),radial-gradient(ellipse 37% 25% at 79% 58%,rgba(244,233,255,.48),transparent 100%) !important;
+  transform:scale(1.12,.88) rotate(4deg) !important;
+}
+.desktop-container.theme-lavender .lavender-cloud.four { transform:scale(.88,1.08) rotate(-11deg) !important; }
+.desktop-container.theme-lavender .lavender-cloud::before,
+.desktop-container.theme-lavender .lavender-cloud::after { border-radius:0 !important; filter:blur(24px) !important; opacity:.58 !important; }
+/* The start control is only the heart itself. */
+.desktop-taskbar .taskbar-start-btn {
+  width:35px !important; height:35px !important; min-width:35px !important; padding:0 !important;
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  border:0 !important; outline:0 !important; background:transparent !important; box-shadow:none !important;
+  border-radius:50% !important; font-size:0 !important; gap:0 !important;
+}
+.desktop-taskbar .taskbar-start-btn .pixel-heart {
+  width:16px !important; height:14px !important; margin:3px 0 0 !important;
+  background:#ff6fa8 !important; transform:rotate(-45deg) scale(1.06) !important;
+  filter:drop-shadow(0 2px 3px rgba(214,70,135,.28));
+}
+.desktop-taskbar .taskbar-start-btn .pixel-heart::before,
+.desktop-taskbar .taskbar-start-btn .pixel-heart::after { background:#ff6fa8 !important; width:14px !important; height:14px !important; }
+.desktop-taskbar .taskbar-start-btn .pixel-heart::before { top:-7px !important; left:0 !important; }
+.desktop-taskbar .taskbar-start-btn .pixel-heart::after { left:7px !important; top:0 !important; }
+.desktop-taskbar .taskbar-start-btn:hover { transform:scale(1.08); filter:drop-shadow(0 0 5px rgba(255,125,178,.55)); }
+/* App windows stay clickable/minimizable, but show only their matching icon. */
+.desktop-taskbar .taskbar-icon-btn {
+  width:35px !important; height:35px !important; min-width:35px !important; padding:0 !important;
+  justify-content:center !important; gap:0 !important; border:0 !important; border-radius:10px !important;
+  background:rgba(255,255,255,.22) !important; box-shadow:none !important; font-size:0 !important;
+  overflow:hidden !important; flex:0 0 35px !important;
+}
+.desktop-taskbar .taskbar-icon-btn .taskbar-icon-symbol { font-size:21px !important; line-height:1 !important; flex:0 0 auto; }
+.desktop-taskbar .taskbar-icon-btn img.taskbar-icon-symbol { width:23px !important; height:23px !important; object-fit:contain !important; }
+.desktop-taskbar .taskbar-icon-btn:hover { background:rgba(255,255,255,.52) !important; box-shadow:0 2px 8px rgba(175,108,170,.15) !important; }
+.desktop-taskbar .taskbar-left-group { gap:5px !important; min-width:0; }
+/* Windows-style search field and live app suggestions. */
+.desktop-search-wrap { position:relative; width:190px; flex:0 1 190px; z-index:40; }
+.desktop-search-box { height:32px; box-sizing:border-box; display:flex; align-items:center; gap:7px; padding:0 10px; border:1px solid rgba(255,255,255,.92); border-radius:17px; background:rgba(255,255,255,.72); box-shadow:inset 0 1px 3px rgba(106,76,139,.08),0 2px 7px rgba(103,70,139,.08); color:#806b9b; }
+.desktop-search-glass { font-size:23px; line-height:1; transform:rotate(-15deg); }
+#desktopAppSearch { min-width:0; width:100%; border:0; outline:0; background:transparent; color:#5f4b7a; font:500 12px 'Quicksand',sans-serif; }
+#desktopAppSearch::placeholder { color:#927fa7; opacity:1; }
+.desktop-search-results { position:fixed; left:0; top:0; width:230px; max-height:260px; overflow:auto; padding:7px; border:1px solid rgba(221,195,239,.95); border-radius:15px; background:linear-gradient(145deg,rgba(255,247,252,.98),rgba(243,234,255,.98)); box-shadow:0 7px 20px rgba(107,77,137,.17),inset 0 1px 0 rgba(255,255,255,.95); backdrop-filter:blur(14px); scrollbar-width:thin; scrollbar-color:#d8b9e9 transparent; }
+.desktop-search-results[hidden] { display:none !important; }
+.desktop-search-result { width:100%; min-height:38px; box-sizing:border-box; display:flex; align-items:center; gap:10px; padding:6px 9px; border:1px solid transparent; border-radius:10px; background:transparent; color:#725a8a; text-align:left; font:600 12px 'Quicksand',sans-serif; cursor:pointer; transition:background .14s ease,border-color .14s ease; }
+.desktop-search-result:hover,.desktop-search-result:focus { outline:0; border-color:rgba(226,190,221,.65); background:linear-gradient(90deg,rgba(255,222,239,.82),rgba(235,222,255,.76)); }
+.desktop-search-result-icon { width:24px; height:24px; min-width:24px; flex:0 0 24px; display:inline-flex; align-items:center; justify-content:center; object-fit:contain; }
+.desktop-search-result-icon svg { width:24px; height:24px; display:block; }
+.desktop-search-comfort-icon { position:relative; width:15px !important; height:11px !important; flex-basis:24px !important; }
+.desktop-search-comfort-icon::before,.desktop-search-comfort-icon::after { content:""; position:absolute; top:6px; width:8px; height:1.5px; background:#b28fb7; }
+.desktop-search-comfort-icon::before { left:4px; transform:rotate(31deg); transform-origin:left center; }
+.desktop-search-comfort-icon::after { right:4px; transform:rotate(-31deg); transform-origin:right center; }
+/* Restore the widget's original translucent lavender card and quiet borders. */
+#bakuClockWidget .bcw-main {
+  border:1px solid rgba(179,151,207,.48) !important; border-radius:19px 19px 17px 17px !important;
+  background:linear-gradient(145deg,rgba(246,239,255,.78),rgba(220,204,244,.72)) !important;
+  box-shadow:0 7px 20px rgba(54,36,79,.12),inset 0 1px 0 rgba(255,255,255,.78) !important;
+  outline:0 !important;
+}
+#bakuClockWidget .bcw-weatherline {
+  border:0 !important; border-radius:0 !important; background:transparent !important;
+  box-shadow:none !important; padding:3px 8px 4px !important;
+}
+#bakuClockWidget .bcw-bow { filter:drop-shadow(0 2px 1px rgba(255,255,255,.65)) !important; }
+#bakuClockWidget .bcw-heart svg path,#bakuClockWidget .bcw-heart2 svg path { fill:#f6b8d2 !important; stroke:#e9a0c3 !important; stroke-width:2 !important; }
+#bakuClockWidget .bcw-decor,#bakuClockWidget .bcw-weatherline:before,#bakuClockWidget .bcw-weatherline:after,#bakuClockWidget .bcw-floaty { color:#e9a8c8 !important; text-shadow:0 1px 0 rgba(255,255,255,.65) !important; }
+#bakuClockWidget .bcw-main::before,#bakuClockWidget .bcw-main::after { color:#e9a8c8 !important; background-image:linear-gradient(#e9a8c8,#e9a8c8) !important; }
+@media(max-width:700px) { .desktop-search-wrap { width:132px; flex-basis:132px; } .desktop-taskbar .taskbar-icon-btn { width:31px !important;height:31px !important;min-width:31px !important;flex-basis:31px !important; } }
+
+/* Date and weather sit neatly inside their own frames; the weather tag hangs on two fine threads. */
+#bakuClockWidget .bcw-date { font-size:15px !important; line-height:1.45 !important; color:#81519b !important; }
+#bakuClockWidget .bcw-weekday { font-size:14px !important; line-height:1.4 !important; }
+#bakuClockWidget .bcw-weatherline {
+  align-self:center !important; position:relative !important; margin:0 18px 0 0 !important;
+  box-sizing:border-box !important; max-width:calc(100% - 36px) !important;
+  padding:8px 13px 9px !important; border:1px solid rgba(174,143,204,.62) !important;
+  border-radius:13px 13px 15px 15px !important;
+  background:linear-gradient(145deg,rgba(249,243,255,.91),rgba(231,218,249,.88)) !important;
+  box-shadow:0 3px 9px rgba(71,47,99,.10),inset 0 1px 0 rgba(255,255,255,.9) !important;
+  color:#76518e !important; font-size:14px !important; font-weight:700 !important;
+  line-height:1.45 !important; white-space:normal !important; text-align:center !important;
+}
+#bakuClockWidget .bcw-weatherline:before,
+#bakuClockWidget .bcw-weatherline:after {
+  content:'' !important; position:absolute !important; top:-15px !important; bottom:auto !important;
+  width:1px !important; height:15px !important; border:0 !important; border-radius:0 !important;
+  background:linear-gradient(to bottom,rgba(174,143,204,.15),rgba(174,143,204,.85)) !important;
+  box-shadow:none !important; text-shadow:none !important;
+}
+#bakuClockWidget .bcw-weatherline:before { left:27% !important; right:auto !important; }
+#bakuClockWidget .bcw-weatherline:after { right:27% !important; left:auto !important; }
+#bakuClockWidget .bcw-date #bcwDate { font-size:15px !important; }
+@media(max-width:700px) {
+  #bakuClockWidget .bcw-date,#bakuClockWidget .bcw-date #bcwDate { font-size:12px !important; }
+  #bakuClockWidget .bcw-weekday { font-size:11px !important; }
+  #bakuClockWidget .bcw-weatherline { font-size:11px !important; padding:6px 8px !important; max-width:calc(100% - 24px) !important; margin-right:12px !important; }
+  #bakuClockWidget .bcw-weatherline:before,#bakuClockWidget .bcw-weatherline:after { top:-12px !important; height:12px !important; }
+}
+/* Search result icons are CSS-drawn shapes rather than emoji characters. */
+.desktop-search-result-icon { position:relative; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; flex:0 0 22px; font-size:0 !important; }
+.desktop-search-result-icon:before { content:''; display:block; width:15px; height:15px; border:1.6px solid #a98bc7; border-radius:5px; background:linear-gradient(145deg,#fff5fc,#e8dcfa); box-shadow:inset 0 1px 0 #fff; }
+.search-icon-heart:before { width:13px;height:13px;border:0;border-radius:0;background:#e9a1c6;clip-path:path('M 7 13 C 5 11 0 8 0 4 C 0 0 5 -1 7 3 C 9 -1 14 0 14 4 C 14 8 9 11 7 13 Z'); }
+.search-icon-calendar:before { border-radius:4px; background:linear-gradient(to bottom,#d7c4ee 0 4px,#fff4fb 4px); }
+.search-icon-envelope:before { width:16px;height:11px;border-radius:3px;background:linear-gradient(145deg,#fff4fb,#e7d9f6); }
+.search-icon-moon:before { width:15px;height:15px;border:0;border-radius:50%;background:#b8a4df;box-shadow:inset -5px -1px 0 #f8efff; }
+.search-icon-music:before { width:8px;height:13px;border:0;border-radius:2px 2px 1px 1px;background:#bda2e3;transform:skewY(-14deg);box-shadow:5px 6px 0 -2px #c987b2; }
+.search-icon-timer:before { width:13px;height:13px;border-radius:50%;background:#f3b3c5;border:2px solid #c783a2; }
+.search-icon-note:before { border-radius:2px;background:linear-gradient(135deg,#fff0ba,#f8d990); }
+.search-icon-game:before { width:16px;height:11px;border-radius:5px;background:#d7c5f1; }
+
+
+/* Keep taskbar controls icon-only with matching drawn line art, never emoji glyphs. */
+.wallpaper-theme-btn { font-size:0 !important; }
+.wallpaper-theme-btn .tray-line-icon:before,.wallpaper-theme-btn .tray-line-icon:after { transition:all .2s ease; }
+.wallpaper-rose-icon .tray-cloud:before { left:5px;top:6px;width:10px;height:10px;border-radius:70% 45% 65% 45%;background:#f0a6c9;border-color:#b979aa;transform:rotate(-25deg); }
+.wallpaper-rose-icon .tray-cloud:after { left:2px;top:12px;width:15px;height:4px;border:0;border-bottom:1.5px solid #87a889;border-radius:50%;background:transparent;transform:rotate(-28deg); }
+.wallpaper-night-icon .tray-cloud:before { left:3px;top:3px;width:14px;height:14px;border:0;border-radius:50%;background:#bba9e5;box-shadow:inset -5px -1px 0 #f7f0ff; }
+.wallpaper-night-icon .tray-cloud:after { left:13px;top:2px;width:4px;height:4px;border:0;border-radius:50%;background:#dba5c7;box-shadow:3px 8px 0 -1px #dba5c7; }
+#soundToggleBtn.is-muted .tray-speaker:after { left:9px;top:3px;width:10px;height:12px;border:0;border-radius:0;background:linear-gradient(135deg,transparent 43%,#b96f99 44% 54%,transparent 55%),linear-gradient(45deg,transparent 43%,#b96f99 44% 54%,transparent 55%); }
+
+</style>
+<script id="desktop-app-search-script">
+(function(){
+ function initDesktopAppSearch(){
+  const input=document.getElementById('desktopAppSearch');
+  const results=document.getElementById('desktopSearchResults');
+  const wrap=document.getElementById('desktopSearchWrap');
+  if(!input||!results||!wrap||input.dataset.searchFixedV2==='true')return;
+  input.dataset.searchFixedV2='true';
+  // Keep the popup outside taskbar clipping, while aligning it to the whole search control.
+  if(results.parentElement!==document.body)document.body.appendChild(results);
+  const apps=[
+   {name:'Daily check-in',key:'dailyCheckin',button:'taskbarDailyCheckin'},
+   {name:'need comfort?',key:'needComfort',button:'taskbarNeedComfort'},
+   {name:'deep thoughts',key:'deepThoughts',button:'taskbarDeepThoughts'},
+   {name:'music player',key:'musicPlayer',button:'taskbarMusicPlayer'},
+   {name:'pomodoro',key:'pomodoro',button:'taskbarPomodoro'},
+   {name:'sticky notes',key:'stickyNotes',button:'taskbarStickyNotes'},
+   {name:'mini game',key:'miniGame',button:'taskbarMiniGame'},
+   {name:'girlfriend.exe',key:'stats',button:'taskbarStats'}
+  ];
+  function positionResults(){
+   const r=wrap.getBoundingClientRect();
+   const width=Math.max(180,Math.min(r.width,320,window.innerWidth-16));
+   const left=Math.max(8,Math.min(r.left,window.innerWidth-width-8));
+   results.style.position='fixed';
+   results.style.left=left+'px';
+   results.style.width=width+'px';
+   results.style.boxSizing='border-box';
+   results.style.bottom='auto';
+   results.style.top='0px';
+   results.style.zIndex='2147483000';
+   const h=Math.min(results.scrollHeight||260,260);
+   const above=r.top-8;
+   const top=above>=Math.min(h,100)?r.top-h-8:r.bottom+8;
+   results.style.top=Math.max(8,Math.min(top,window.innerHeight-h-8))+'px';
+  }
+  function hide(){results.hidden=true;}
+  function render(){
+   const q=input.value.trim().toLocaleLowerCase();
+   results.replaceChildren();
+   if(!q){hide();return;}
+   const matches=apps.filter(a=>a.name.toLocaleLowerCase().startsWith(q));
+   matches.forEach(a=>{
+    const b=document.createElement('button');b.type='button';b.className='desktop-search-result';b.setAttribute('role','option');
+    const source=document.getElementById(a.button);
+    const originalIcon=source?.querySelector('.taskbar-icon-symbol, .mini-game-taskbar-icon');
+    if(originalIcon){
+     // Reuse only the original artwork, not the taskbar wrapper/classes that add pseudo-shapes.
+     let i;
+     const originalSvg=originalIcon.querySelector('svg');
+     if(originalSvg){
+      i=document.createElement('span');
+      i.className='desktop-search-result-icon';
+      i.appendChild(originalSvg.cloneNode(true));
+     }else if(originalIcon.tagName==='IMG'){
+      i=document.createElement('img');i.className='desktop-search-result-icon';i.src=originalIcon.currentSrc||originalIcon.src;i.alt='';
+     }else if(originalIcon.classList.contains('comfort-taskbar-envelope')){
+      i=document.createElement('span');i.className='desktop-search-result-icon desktop-search-comfort-icon';
+     }
+     if(i){
+      i.setAttribute('aria-hidden','true');
+      i.style.width='24px';i.style.height='24px';i.style.minWidth='24px';i.style.flex='0 0 24px';i.style.objectFit='contain';i.style.display='inline-flex';i.style.alignItems='center';i.style.justifyContent='center';
+      const svg=i.querySelector('svg');if(svg){svg.style.width='24px';svg.style.height='24px';svg.style.display='block';}
+      b.appendChild(i);
+     }
+    }
+    const t=document.createElement('span');t.textContent=a.name;b.appendChild(t);
+    b.addEventListener('click',()=>{hide();input.value='';input.blur();if(typeof window.openApp==='function')window.openApp(a.key);});
+    results.appendChild(b);
+   });
+   results.hidden=matches.length===0;
+   if(matches.length)positionResults();
+  }
+  input.addEventListener('input',render);
+  input.addEventListener('focus',render);
+  input.addEventListener('keydown',e=>{
+   if(e.key==='Escape'){input.value='';hide();input.blur();}
+   else if(e.key==='Enter'){const first=results.querySelector('button');if(first){e.preventDefault();first.click();}}
+   else if(e.key==='ArrowDown'){const first=results.querySelector('button');if(first){e.preventDefault();first.focus();}}
+  });
+  results.addEventListener('keydown',e=>{if(e.key==='Escape'){hide();input.focus();}});
+  document.addEventListener('pointerdown',e=>{if(!wrap.contains(e.target)&&!results.contains(e.target))hide();});
+  window.addEventListener('resize',()=>{if(!results.hidden)positionResults();});
+  window.addEventListener('scroll',()=>{if(!results.hidden)positionResults();},true);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initDesktopAppSearch,{once:true});else initDesktopAppSearch();
+})();
+</script>
+
+
+<style id="requested-cloud-taskbar-widget-refinements">
+/* Theme 1: brighter, more visible mist with distinct cloud silhouettes; existing cloudDrift animation is preserved. */
+.desktop-container.theme-lavender .lavender-cloud {
+  width:700px !important;height:300px !important;filter:blur(17px) saturate(1.08) !important;opacity:1 !important;
+  background:
+   radial-gradient(ellipse 21% 19% at 9% 58%,rgba(255,255,255,.70),transparent 100%),
+   radial-gradient(ellipse 29% 27% at 25% 38%,rgba(255,255,255,.68),transparent 100%),
+   radial-gradient(ellipse 23% 20% at 39% 60%,rgba(250,243,255,.63),transparent 100%),
+   radial-gradient(ellipse 35% 24% at 58% 42%,rgba(255,255,255,.67),transparent 100%),
+   radial-gradient(ellipse 22% 19% at 77% 57%,rgba(247,239,255,.61),transparent 100%),
+   radial-gradient(ellipse 32% 17% at 51% 75%,rgba(255,255,255,.55),transparent 100%) !important;
+  box-shadow:0 0 40px rgba(255,255,255,.12) !important;
+}
+.desktop-container.theme-lavender .lavender-cloud.one {
+ background:radial-gradient(ellipse 19% 20% at 12% 62%,rgba(255,255,255,.74),transparent 100%),radial-gradient(ellipse 27% 32% at 29% 42%,rgba(255,255,255,.69),transparent 100%),radial-gradient(ellipse 18% 22% at 43% 64%,rgba(247,240,255,.63),transparent 100%),radial-gradient(ellipse 35% 25% at 62% 43%,rgba(255,255,255,.67),transparent 100%),radial-gradient(ellipse 26% 17% at 83% 58%,rgba(255,255,255,.56),transparent 100%) !important;
+}
+.desktop-container.theme-lavender .lavender-cloud.two {
+ background:radial-gradient(ellipse 31% 18% at 14% 44%,rgba(255,255,255,.66),transparent 100%),radial-gradient(ellipse 19% 29% at 33% 58%,rgba(244,235,255,.64),transparent 100%),radial-gradient(ellipse 32% 20% at 51% 35%,rgba(255,255,255,.70),transparent 100%),radial-gradient(ellipse 23% 28% at 72% 58%,rgba(255,255,255,.61),transparent 100%),radial-gradient(ellipse 28% 16% at 91% 39%,rgba(239,229,255,.57),transparent 100%) !important;
+}
+.desktop-container.theme-lavender .lavender-cloud.three {
+ background:radial-gradient(ellipse 25% 25% at 10% 40%,rgba(245,238,255,.63),transparent 100%),radial-gradient(ellipse 35% 17% at 29% 65%,rgba(255,255,255,.69),transparent 100%),radial-gradient(ellipse 20% 33% at 49% 39%,rgba(255,255,255,.65),transparent 100%),radial-gradient(ellipse 31% 20% at 69% 62%,rgba(250,241,255,.64),transparent 100%),radial-gradient(ellipse 20% 17% at 89% 43%,rgba(255,255,255,.58),transparent 100%) !important;
+}
+.desktop-container.theme-lavender .lavender-cloud.four {
+ background:radial-gradient(ellipse 28% 17% at 13% 57%,rgba(255,255,255,.62),transparent 100%),radial-gradient(ellipse 20% 30% at 32% 39%,rgba(247,239,255,.65),transparent 100%),radial-gradient(ellipse 35% 22% at 53% 59%,rgba(255,255,255,.68),transparent 100%),radial-gradient(ellipse 21% 25% at 73% 38%,rgba(255,255,255,.61),transparent 100%),radial-gradient(ellipse 30% 18% at 91% 62%,rgba(241,231,255,.58),transparent 100%) !important;
+}
+.desktop-container.theme-lavender .lavender-cloud::before { width:260px !important;height:155px !important;left:8% !important;top:-22px !important;filter:blur(19px) !important;opacity:.8 !important; }
+.desktop-container.theme-lavender .lavender-cloud::after { width:225px !important;height:128px !important;right:7% !important;top:40px !important;filter:blur(20px) !important;opacity:.72 !important; }
+/* Match the mini-game taskbar button's hover glow to the other pastel taskbar buttons. */
+.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame {
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease, border-color .15s ease !important;
+}
+.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame:hover {
+  transform: translateY(-1px) !important;
+  background: linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,220,251,.65)) !important;
+  border: 1px solid rgba(255,255,255,.72) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 3px 9px rgba(170,126,194,.2), 0 0 0 2px rgba(238,218,250,.25) !important;
+}
+.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame:active {
+  transform: translateY(0) !important;
+  box-shadow: inset 0 1px 3px rgba(124,83,148,.16) !important;
+}
+
+/* Hand-drawn pastel taskbar icon finish. Keep the existing mini-game artwork unchanged. */
+.desktop-taskbar .taskbar-icon-btn:not(#taskbarMiniGame) { background:linear-gradient(145deg,rgba(255,255,255,.38),rgba(229,213,249,.25)) !important;border:1px solid rgba(255,255,255,.45) !important;border-radius:11px !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 5px rgba(101,73,132,.06) !important; }
+.desktop-taskbar .taskbar-icon-btn:not(#taskbarMiniGame) .custom-taskbar-icon svg { width:25px !important;height:25px !important;filter:drop-shadow(0 1px 1px rgba(124,83,148,.12)); }
+.desktop-taskbar .taskbar-icon-btn:not(#taskbarMiniGame):hover { transform:translateY(-1px) !important;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,220,251,.65)) !important; }
+.desktop-taskbar .comfort-taskbar-envelope { width:22px !important;height:17px !important;border:1.6px solid #bd8ebc !important;border-radius:4px !important;background:linear-gradient(145deg,#fff6fc,#eadcf7) !important;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(125,83,143,.12); }
+.desktop-taskbar .comfort-taskbar-envelope::before,.desktop-taskbar .comfort-taskbar-envelope::after { top:2px !important;width:11px !important;height:1.5px !important;background:#bd8ebc !important; }
+/* Larger date and weather type; weather remains inside its own hanging glassy mini-frame. */
+#bakuClockWidget .bcw-date,#bakuClockWidget .bcw-date #bcwDate { font-size:17px !important;line-height:1.42 !important; }
+#bakuClockWidget .bcw-weekday { font-size:15px !important;line-height:1.4 !important; }
+#bakuClockWidget .bcw-weatherline { font-size:15px !important;line-height:1.45 !important;padding:9px 15px 10px !important;margin-right:8px !important;max-width:calc(100% - 28px) !important; }
+@media(max-width:700px) {
+ #bakuClockWidget .bcw-date,#bakuClockWidget .bcw-date #bcwDate { font-size:13px !important; }
+ #bakuClockWidget .bcw-weekday { font-size:12px !important; }
+ #bakuClockWidget .bcw-weatherline { font-size:12px !important;padding:7px 9px !important; }
+}
+</style>
+
+<style id="requested-final-four-repairs">
+/* 1) Keep the cloud shapes distinct while animating their horizontal drift.
+   Position is animated instead of transform so each cloud's decorative rotation cannot cancel movement. */
+.desktop-container.theme-lavender .lavender-cloud.one,
+.desktop-container.theme-lavender .lavender-cloud.two,
+.desktop-container.theme-lavender .lavender-cloud.three,
+.desktop-container.theme-lavender .lavender-cloud.four {
+  animation-name: cloudDriftPosition !important;
+  will-change: left;
+}
+.desktop-container.theme-lavender .lavender-cloud.one { animation-duration:34s !important; animation-delay:0s !important; }
+.desktop-container.theme-lavender .lavender-cloud.two { animation-duration:41s !important; animation-delay:-14s !important; }
+.desktop-container.theme-lavender .lavender-cloud.three { animation-duration:38s !important; animation-delay:-27s !important; }
+.desktop-container.theme-lavender .lavender-cloud.four { animation-duration:45s !important; animation-delay:-8s !important; }
+@keyframes cloudDriftPosition {
+  0% { left:-720px; }
+  18% { left:calc(18vw - 500px); }
+  36% { left:calc(36vw - 280px); }
+  54% { left:calc(54vw - 60px); }
+  72% { left:calc(72vw + 160px); }
+  100% { left:calc(100vw + 720px); }
+}
+
+/* 2) Weather tag aligned to the right edge of the clock card, with two hanging threads. */
+#bakuClockWidget .bcw-weatherline {
+  align-self:flex-end !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+  max-width:calc(100% - 10px) !important;
+  text-align:left !important;
+}
+#bakuClockWidget .bcw-weatherline:before { left:28% !important; right:auto !important; }
+#bakuClockWidget .bcw-weatherline:after { right:28% !important; left:auto !important; }
+@media(max-width:700px) {
+  #bakuClockWidget .bcw-weatherline { margin-right:0 !important; max-width:calc(100% - 6px) !important; }
+}
+
+/* 3) Preserve the three right-side tray controls and clock when the app buttons are present. */
+.desktop-taskbar { display:flex !important; align-items:center !important; }
+.desktop-taskbar .taskbar-left-group { flex:1 1 auto !important; min-width:0 !important; overflow:hidden !important; }
+.desktop-taskbar .taskbar-tray {
+  display:flex !important; flex:0 0 auto !important; flex-shrink:0 !important;
+  align-items:center !important; justify-content:flex-end !important;
+  gap:9px !important; min-width:max-content !important;
+  visibility:visible !important; opacity:1 !important; position:relative !important;
+  z-index:5 !important; margin-left:auto !important;
+}
+.desktop-taskbar .taskbar-tray .sweet-message-wrap,
+.desktop-taskbar .taskbar-tray #soundToggleBtn,
+.desktop-taskbar .taskbar-tray #wallpaperThemeBtn,
+.desktop-taskbar .taskbar-tray #clockDisplay {
+  display:flex !important; flex:0 0 auto !important; visibility:visible !important; opacity:1 !important;
+}
+.desktop-taskbar .taskbar-tray .sweet-message-btn,
+.desktop-taskbar .taskbar-tray #soundToggleBtn,
+.desktop-taskbar .taskbar-tray #wallpaperThemeBtn {
+  width:27px !important; height:27px !important; min-width:27px !important;
+  align-items:center !important; justify-content:center !important;
+}
+.desktop-taskbar .taskbar-tray #clockDisplay { white-space:nowrap !important; }
+@media(max-width:760px) {
+  .desktop-taskbar .taskbar-left-group { gap:3px !important; }
+  .desktop-taskbar .desktop-search-wrap { width:90px !important; flex-basis:90px !important; }
+  .desktop-taskbar .taskbar-tray { gap:5px !important; padding-left:5px !important; padding-right:5px !important; }
+}
+
+/* 4) Center every custom icon within its square and give the mini-game square the same frame. */
+.desktop-taskbar .taskbar-icon-btn {
+  /* Keep the original display:none / inline JS show-hide behavior. */
+  align-items:center !important; justify-content:center !important;
+  box-sizing:border-box !important; position:relative !important; vertical-align:middle !important;
+  background:linear-gradient(145deg,rgba(255,255,255,.38),rgba(229,213,249,.25)) !important;
+  border:1px solid rgba(255,255,255,.45) !important; border-radius:11px !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 5px rgba(101,73,132,.06) !important;
+}
+.desktop-taskbar .taskbar-icon-btn .taskbar-icon-symbol {
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  position:relative !important; margin:0 auto !important; padding:0 !important;
+  line-height:1 !important; transform:none !important; flex:0 0 auto !important;
+}
+.desktop-taskbar .taskbar-icon-btn .custom-taskbar-icon svg { display:block !important; margin:auto !important; }
+.desktop-taskbar .taskbar-icon-btn img.taskbar-icon-symbol {
+  display:block !important; width:23px !important; height:23px !important;
+  object-fit:contain !important; object-position:center center !important;
+  margin:0 auto !important; padding:0 !important;
+}
+.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame {
+  background:linear-gradient(145deg,rgba(255,255,255,.38),rgba(229,213,249,.25)) !important;
+  border:1px solid rgba(255,255,255,.45) !important; border-radius:11px !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 5px rgba(101,73,132,.06) !important;
+  padding:0 !important;
+}
+.desktop-taskbar .taskbar-icon-btn:hover { background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,220,251,.65)) !important; }
+
+
+/* Definitive taskbar repair: preserve app-controlled visibility and center icon artwork. */
+.desktop-taskbar .taskbar-icon-btn {
+  width:35px !important; height:35px !important; min-width:35px !important;
+  flex:0 0 35px !important; box-sizing:border-box !important;
+  align-items:center !important; justify-content:center !important;
+  gap:0 !important; padding:0 !important; font-size:0 !important; line-height:0 !important;
+  text-indent:0 !important; overflow:hidden !important; vertical-align:middle !important;
+  position:relative !important; text-align:center !important;
+  background:linear-gradient(145deg,rgba(255,255,255,.38),rgba(229,213,249,.25)) !important;
+  border:1px solid rgba(255,255,255,.45) !important; border-radius:11px !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 5px rgba(101,73,132,.06) !important;
+}
+.desktop-taskbar .taskbar-icon-btn .taskbar-icon-symbol {
+  display:flex !important; width:25px !important; height:25px !important;
+  min-width:25px !important; flex:0 0 25px !important; box-sizing:border-box !important;
+  align-items:center !important; justify-content:center !important;
+  margin:0 !important; padding:0 !important; position:relative !important;
+  line-height:0 !important; font-size:0 !important; transform:none !important;
+}
+.desktop-taskbar .taskbar-icon-btn .custom-taskbar-icon svg {
+  display:block !important; width:25px !important; height:25px !important;
+  margin:0 !important; flex:0 0 25px !important;
+}
+.desktop-taskbar .taskbar-icon-btn .comfort-taskbar-envelope {
+  display:block !important; width:22px !important; height:17px !important;
+  min-width:22px !important; flex:0 0 22px !important; margin:0 !important;
+}
+.desktop-taskbar .taskbar-icon-btn img.taskbar-icon-symbol {
+  display:block !important; width:25px !important; height:25px !important;
+  min-width:25px !important; flex:0 0 25px !important;
+  object-fit:contain !important; object-position:50% 50% !important;
+  margin:0 !important; padding:0 !important;
+}
+.desktop-taskbar .taskbar-icon-btn#taskbarMiniGame {
+  background:linear-gradient(145deg,rgba(255,255,255,.38),rgba(229,213,249,.25)) !important;
+  border:1px solid rgba(255,255,255,.45) !important; border-radius:11px !important;
+  padding:0 !important;
+}
+/* Right-side tray must retain its space and never be clipped by the app-button group. */
+.desktop-taskbar { display:flex !important; width:100% !important; box-sizing:border-box !important; }
+.desktop-taskbar .taskbar-left-group {
+  flex:1 1 0% !important; min-width:0 !important; overflow:hidden !important;
+}
+.desktop-taskbar .taskbar-tray {
+  display:flex !important; flex:0 0 auto !important; width:auto !important;
+  min-width:max-content !important; max-width:none !important; overflow:visible !important;
+  align-items:center !important; justify-content:flex-end !important;
+  margin-left:auto !important; position:relative !important; z-index:20 !important;
+  visibility:visible !important; opacity:1 !important;
+}
+.desktop-taskbar .taskbar-tray .sweet-message-wrap { display:flex !important; flex:0 0 27px !important; width:27px !important; height:27px !important; visibility:visible !important; opacity:1 !important; }
+.desktop-taskbar .taskbar-tray #sweetMessageBtn,
+.desktop-taskbar .taskbar-tray #soundToggleBtn,
+.desktop-taskbar .taskbar-tray #wallpaperThemeBtn {
+  display:flex !important; flex:0 0 27px !important; width:27px !important; height:27px !important;
+  min-width:27px !important; align-items:center !important; justify-content:center !important;
+  visibility:visible !important; opacity:1 !important; position:relative !important;
+}
+.desktop-taskbar .taskbar-tray #clockDisplay { display:block !important; flex:0 0 auto !important; white-space:nowrap !important; visibility:visible !important; opacity:1 !important; }
+/* Weather tag uses the same translucent lavender glass as the main clock card; visible hanging threads. */
+#bakuClockWidget .bcw-weatherline {
+  align-self:flex-end !important; margin-left:0 !important; margin-right:0 !important;
+  border:1px solid rgba(179,151,207,.48) !important;
+  border-radius:13px 13px 15px 15px !important;
+  background:linear-gradient(145deg,rgba(246,239,255,.78),rgba(220,204,244,.72)) !important;
+  box-shadow:0 4px 12px rgba(54,36,79,.10),inset 0 1px 0 rgba(255,255,255,.78) !important;
+  color:#76518e !important;
+}
+#bakuClockWidget .bcw-weatherline:before,
+#bakuClockWidget .bcw-weatherline:after {
+  content:'' !important; display:block !important; position:absolute !important;
+  top:-17px !important; bottom:auto !important; height:17px !important; width:1px !important;
+  border:0 !important; border-radius:0 !important;
+  background:rgba(179,151,207,.8) !important; box-shadow:none !important;
+}
+#bakuClockWidget .bcw-weatherline:before { left:27% !important; right:auto !important; }
+#bakuClockWidget .bcw-weatherline:after { right:27% !important; left:auto !important; }
+@media(max-width:760px) {
+ .desktop-taskbar .taskbar-icon-btn { width:31px !important; height:31px !important; min-width:31px !important; flex-basis:31px !important; }
+ .desktop-taskbar .taskbar-icon-btn .taskbar-icon-symbol,
+ .desktop-taskbar .taskbar-icon-btn .custom-taskbar-icon svg,
+ .desktop-taskbar .taskbar-icon-btn img.taskbar-icon-symbol { width:23px !important; height:23px !important; min-width:23px !important; flex-basis:23px !important; }
+}
+
+
+/* Explicitly draw the three right-side taskbar controls; their spans had no base artwork rules. */
+.desktop-taskbar .taskbar-tray .tray-line-icon {
+  display:block !important; position:relative !important; flex:0 0 20px !important;
+  width:20px !important; height:20px !important; min-width:20px !important;
+  margin:0 auto !important; padding:0 !important; opacity:1 !important;
+  visibility:visible !important; color:#a879b5 !important; font-size:0 !important;
+  line-height:0 !important; overflow:visible !important;
+}
+.desktop-taskbar .taskbar-tray .tray-line-icon::before,
+.desktop-taskbar .taskbar-tray .tray-line-icon::after {
+  content:"" !important; display:block !important; position:absolute !important;
+  box-sizing:border-box !important; opacity:1 !important; visibility:visible !important;
+}
+/* Envelope / sweet-message icon */
+.desktop-taskbar .taskbar-tray .tray-envelope::before {
+  left:2px !important; top:4px !important; width:16px !important; height:12px !important;
+  border:1.7px solid #a879b5 !important; border-radius:3px !important;
+  background:linear-gradient(145deg,rgba(255,249,255,.98),rgba(232,216,248,.92)) !important;
+  box-shadow:0 1px 2px rgba(100,70,130,.12) !important;
+}
+.desktop-taskbar .taskbar-tray .tray-envelope::after {
+  left:5px !important; top:5px !important; width:10px !important; height:8px !important;
+  border-left:1.5px solid #a879b5 !important; border-bottom:1.5px solid #a879b5 !important;
+  background:transparent !important; transform:rotate(-45deg) scale(.72) !important;
+  border-radius:0 0 0 2px !important;
+}
+/* Speaker icon */
+.desktop-taskbar .taskbar-tray .tray-speaker::before {
+  left:2px !important; top:6px !important; width:8px !important; height:9px !important;
+  background:#b18bc7 !important; border:1px solid #966eaf !important;
+  clip-path:polygon(0 28%,42% 28%,100% 0,100% 100%,42% 72%,0 72%) !important;
+  border-radius:1px !important;
+}
+.desktop-taskbar .taskbar-tray .tray-speaker::after {
+  left:9px !important; top:3px !important; width:9px !important; height:14px !important;
+  border:1.6px solid #a879b5 !important; border-left:0 !important; border-top-color:transparent !important;
+  border-bottom-color:transparent !important; border-radius:0 12px 12px 0 !important;
+  background:transparent !important;
+}
+/* Cloud / wallpaper icon */
+.desktop-taskbar .taskbar-tray .tray-cloud::before {
+  left:2px !important; top:7px !important; width:16px !important; height:9px !important;
+  border:1.5px solid #a879b5 !important; border-radius:8px !important;
+  background:linear-gradient(145deg,#fff8ff,#e4d5f5) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+.desktop-taskbar .taskbar-tray .tray-cloud::after {
+  left:5px !important; top:3px !important; width:10px !important; height:10px !important;
+  border:1.5px solid #a879b5 !important; border-bottom:0 !important; border-radius:8px 8px 0 0 !important;
+  background:linear-gradient(145deg,#fff8ff,#e4d5f5) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+.desktop-taskbar .taskbar-tray .sweet-message-btn,
+.desktop-taskbar .taskbar-tray #soundToggleBtn,
+.desktop-taskbar .taskbar-tray #wallpaperThemeBtn {
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  overflow:visible !important; color:#a879b5 !important; opacity:1 !important; visibility:visible !important;
+}
+
+
+
+/* Final taskbar icon correction: preserve the original controls' state-dependent artwork. */
+.desktop-taskbar .taskbar-tray .tray-envelope::before {
+  left:2px !important; top:5px !important; width:16px !important; height:11px !important;
+  border:1.6px solid #a879b5 !important; border-radius:3px !important;
+  background:linear-gradient(145deg,rgba(255,250,255,.98),rgba(232,216,248,.94)) !important;
+  box-shadow:0 1px 2px rgba(100,70,130,.12) !important;
+}
+.desktop-taskbar .taskbar-tray .tray-envelope::after {
+  left:5px !important; top:5px !important; width:10px !important; height:7px !important;
+  border:0 !important; border-radius:0 !important;
+  background:linear-gradient(35deg,transparent 46%,#a879b5 48% 55%,transparent 57%) left top/50% 100% no-repeat,
+             linear-gradient(-35deg,transparent 46%,#a879b5 48% 55%,transparent 57%) right top/50% 100% no-repeat !important;
+  transform:none !important;
+}
+/* Sound is a speaker when on, and a clear X when muted. */
+#soundToggleBtn:not(.is-muted) .tray-speaker::after {
+  left:10px !important; top:4px !important; width:8px !important; height:12px !important;
+  border:1.5px solid #a879b5 !important; border-left:0 !important;
+  border-top-color:transparent !important; border-bottom-color:transparent !important;
+  border-radius:0 10px 10px 0 !important; background:transparent !important;
+}
+#soundToggleBtn.is-muted .tray-speaker::after {
+  left:10px !important; top:4px !important; width:10px !important; height:12px !important;
+  border:0 !important; border-radius:0 !important; transform:none !important;
+  background:linear-gradient(45deg,transparent 43%,#b96f99 44% 56%,transparent 57%),
+             linear-gradient(-45deg,transparent 43%,#b96f99 44% 56%,transparent 57%) !important;
+}
+/* Match the wallpaper button symbol to the currently selected wallpaper. */
+#wallpaperThemeBtn.wallpaper-lavender-icon .tray-cloud::before {
+  left:2px !important; top:7px !important; width:16px !important; height:9px !important;
+  border:1.5px solid #a879b5 !important; border-radius:8px !important;
+  background:linear-gradient(145deg,#fff8ff,#e4d5f5) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9) !important; transform:none !important;
+}
+#wallpaperThemeBtn.wallpaper-lavender-icon .tray-cloud::after {
+  left:5px !important; top:3px !important; width:10px !important; height:10px !important;
+  border:1.5px solid #a879b5 !important; border-bottom:0 !important;
+  border-radius:8px 8px 0 0 !important; background:linear-gradient(145deg,#fff8ff,#e4d5f5) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9) !important; transform:none !important;
+}
+#wallpaperThemeBtn.wallpaper-rose-icon .tray-cloud::before {
+  left:5px !important; top:3px !important; width:10px !important; height:10px !important;
+  border:1.5px solid #b979aa !important; border-radius:70% 45% 65% 45% !important;
+  background:#f0a6c9 !important; transform:rotate(-25deg) !important; box-shadow:none !important;
+}
+#wallpaperThemeBtn.wallpaper-rose-icon .tray-cloud::after {
+  left:2px !important; top:12px !important; width:15px !important; height:4px !important;
+  border:0 !important; border-bottom:1.5px solid #87a889 !important; border-radius:50% !important;
+  background:transparent !important; transform:rotate(-28deg) !important; box-shadow:none !important;
+}
+#wallpaperThemeBtn.wallpaper-night-icon .tray-cloud::before {
+  left:3px !important; top:3px !important; width:14px !important; height:14px !important;
+  border:0 !important; border-radius:50% !important; background:#bba9e5 !important;
+  box-shadow:inset -5px -1px 0 #f7f0ff !important; transform:none !important;
+}
+#wallpaperThemeBtn.wallpaper-night-icon .tray-cloud::after {
+  left:13px !important; top:2px !important; width:4px !important; height:4px !important;
+  border:0 !important; border-radius:50% !important; background:#dba5c7 !important;
+  box-shadow:3px 8px 0 -1px #dba5c7 !important; transform:none !important;
+}
+
+</style>
+
+
+<style id="final-requested-icon-search-weather-fixes">
+/* Cleaner, simpler wallpaper symbols: a soft cloud for lavender and a recognizable rose for pink. */
+#wallpaperThemeBtn.wallpaper-lavender-icon .tray-cloud::before {
+  left:2px !important; top:8px !important; width:16px !important; height:8px !important;
+  border:1.5px solid #9d7ab7 !important; border-radius:7px !important;
+  background:#f8f0ff !important; box-shadow:none !important; transform:none !important;
+}
+#wallpaperThemeBtn.wallpaper-lavender-icon .tray-cloud::after {
+  left:5px !important; top:4px !important; width:10px !important; height:9px !important;
+  border:1.5px solid #9d7ab7 !important; border-bottom:0 !important;
+  border-radius:8px 8px 0 0 !important; background:#f8f0ff !important;
+  box-shadow:none !important; transform:none !important;
+}
+#wallpaperThemeBtn.wallpaper-rose-icon .tray-cloud::before {
+  left:5px !important; top:2px !important; width:10px !important; height:10px !important;
+  border:1.4px solid #bd79a4 !important; border-radius:50% !important;
+  background:radial-gradient(circle at 50% 50%,#ffe5f1 0 20%,#ee9fc5 24% 55%,#f7c4dd 60% 100%) !important;
+  box-shadow:none !important; transform:none !important;
+}
+#wallpaperThemeBtn.wallpaper-rose-icon .tray-cloud::after {
+  left:9px !important; top:11px !important; width:2px !important; height:7px !important;
+  border:0 !important; border-radius:2px !important; background:#80a987 !important;
+  box-shadow:-4px 1px 0 -0.2px #80a987 !important; transform:rotate(18deg) !important;
+}
+/* Search keeps the requested starts-with filtering, hides non-matches, and opens the selected app. */
+#desktopSearchResults[hidden] { display:none !important; }
+.desktop-search-result { cursor:pointer !important; }
+/* The weather's two hanging threads belong in the small gap below the date/time card. */
+#bakuClockWidget .bcw-weatherline:before,
+#bakuClockWidget .bcw-weatherline:after {
+  top:-7px !important; height:7px !important; bottom:auto !important;
+  width:1px !important; transform:none !important;
+  background:linear-gradient(to bottom,rgba(174,143,204,.18),rgba(174,143,204,.9)) !important;
+}
+#bakuClockWidget .bcw-weatherline:before { left:27% !important; right:auto !important; }
+#bakuClockWidget .bcw-weatherline:after { right:27% !important; left:auto !important; }
+@media(max-width:700px) {
+  #bakuClockWidget .bcw-weatherline:before,
+  #bakuClockWidget .bcw-weatherline:after { top:-6px !important; height:6px !important; }
+}
+</style>
+
+
+<style id="search-theme-icon-repair">
+#desktopSearchWrap { position:relative !important; }
+#desktopSearchResults:not([hidden]) { display:flex !important; flex-direction:column !important; position:fixed !important; min-width:220px !important; max-height:260px !important; overflow-y:auto !important; z-index:2147483000 !important; padding:6px !important; border:1px solid #e6cce9 !important; border-radius:12px !important; background:rgba(255,248,253,.98) !important; box-shadow:0 8px 24px rgba(93,59,112,.2) !important; }
+#desktopSearchResults[hidden] { display:none !important; }
+#desktopSearchResults .desktop-search-result { display:flex !important; align-items:center !important; gap:9px !important; width:100% !important; padding:8px 10px !important; text-align:left !important; border:0 !important; border-radius:8px !important; color:#6f4b78 !important; background:transparent !important; }
+#desktopSearchResults .desktop-search-result:hover,#desktopSearchResults .desktop-search-result:focus-visible { background:#f4e4f4 !important; outline:none !important; }
+#wallpaperThemeBtn .tray-cloud::before,#wallpaperThemeBtn .tray-cloud::after { content:none !important; display:none !important; }
+#wallpaperThemeBtn .tray-cloud svg { display:block !important; overflow:visible !important; }
+</style>
 
 </body>
 </html>
